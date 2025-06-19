@@ -1,0 +1,159 @@
+.gooey-nav-container {
+  position: relative;
+  display: inline-block;
+  --color-1: #8b5cf6;
+  --color-2: #06b6d4;
+  --color-3: #10b981;
+  --color-4: #f59e0b;
+  --color-5: #ef4444;
+  --color-6: #ec4899;
+}
+
+.gooey-nav-container nav {
+  position: relative;
+  z-index: 2;
+}
+
+.gooey-nav-container ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 1rem;
+}
+
+.gooey-nav-container li {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gooey-nav-container li a {
+  display: block;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: 500;
+  border-radius: 2rem;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 3;
+}
+
+.gooey-nav-container li:hover a {
+  color: #000000;
+}
+
+.gooey-nav-container .effect {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 2rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gooey-nav-container .effect.filter {
+  background: rgba(139, 92, 246, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  z-index: 1;
+}
+
+.gooey-nav-container .effect.text {
+  background: linear-gradient(135deg, var(--color-1), var(--color-2));
+  color: #000000;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gooey-nav-container .effect.text.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.gooey-nav-container .particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+.gooey-nav-container .particle .point {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--color);
+  transform: scale(var(--scale, 1));
+}
+
+.gooey-nav-container.active .particle {
+  animation: particle-move var(--time, 600ms) ease-out forwards;
+}
+
+.gooey-nav-container .effect.filter.active .particle {
+  animation: particle-move var(--time, 600ms) ease-out forwards;
+}
+
+@keyframes particle-move {
+  0% {
+    transform: translate(-50%, -50%) translate(var(--start-x, 0), var(--start-y, 0)) rotate(0deg) scale(0);
+    opacity: 1;
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(var(--start-x, 0), var(--start-y, 0)) rotate(var(--rotate, 0deg))
+      scale(var(--scale, 1));
+  }
+  90% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(var(--end-x, 0), var(--end-y, 0)) rotate(var(--rotate, 0deg))
+      scale(var(--scale, 1));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--end-x, 0), var(--end-y, 0)) rotate(var(--rotate, 0deg)) scale(0);
+  }
+}
+
+/* Gooey effect using SVG filter */
+.gooey-nav-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  filter: url("#gooey");
+  pointer-events: none;
+}
+
+/* Add gooey SVG filter to the page */
+.gooey-filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .gooey-nav-container ul {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .gooey-nav-container li a {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}
