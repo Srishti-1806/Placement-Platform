@@ -10,6 +10,6 @@ python-multipart==0.0.6
 pydantic==2.5.0
 PyPDF2
 transformers
-yt dlp
+yt-dlp
 whisper
 fpdf
