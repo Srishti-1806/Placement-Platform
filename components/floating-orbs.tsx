@@ -1,14 +1,23 @@
 "use client"
 import { motion } from "framer-motion"
-
+import { useState,useEffect } from "react";
 export function FloatingOrbs() {
-  const orbs = Array.from({ length: 6 }, (_, i) => ({
-    id: i,
-    size: Math.random() * 100 + 50,
-    initialX: Math.random() * window.innerWidth,
-    initialY: Math.random() * window.innerHeight,
-    color: ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899"][i],
-  }))
+  const [orbs, setOrbs] = useState<
+    { id: number; size: number; initialX: number; initialY: number; color: string }[]
+  >([])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const generatedOrbs = Array.from({ length: 6 }, (_, i) => ({
+        id: i,
+        size: Math.random() * 100 + 50,
+        initialX: Math.random() * window.innerWidth,
+        initialY: Math.random() * window.innerHeight,
+        color: ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'][i],
+      }))
+      setOrbs(generatedOrbs)
+    }
+  }, [])
 
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: -1 }}>

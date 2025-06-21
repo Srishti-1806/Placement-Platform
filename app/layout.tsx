@@ -1,5 +1,7 @@
+"use client"
+
 import type React from "react"
-import type { Metadata } from "next"
+// import type { Metadata } from "next"
 import "./globals.css"
 import { Header } from "@/components/header"
 import { GalaxyBackground } from "@/components/galaxy-background"
@@ -11,11 +13,11 @@ import { AuthProvider } from "@/contexts/auth-context"
 import { SettingsPanel } from "@/components/settings-panel"
 import { FeaturesSidebar } from "@/components/features-sidebar"
 
-export const metadata: Metadata = {
-  title: "PlacementPro - Your Complete Placement Solution",
-  description: "AI-powered placement preparation platform with speech analysis, resume builder, and community support",
-  generator: "v0.dev",
-}
+// export const metadata: Metadata = {
+//   title: "PlacementPro - Your Complete Placement Solution",
+//   description: "AI-powered placement preparation platform with speech analysis, resume builder, and community support",
+//   generator: "v0.dev",
+// }
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { galaxyEnabled } = useSettings()

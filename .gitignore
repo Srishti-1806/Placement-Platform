@@ -25,3 +25,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+venv310
+utils/ffmpeg.exe
+utils/ffplay.exe
+utils/ffprobe.exe
+utils/__pycache__
+__pycache__
+temp
+public/pdfs/summary.pdf
+public/pdfs/transcript.pdf

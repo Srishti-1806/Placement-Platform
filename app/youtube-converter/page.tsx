@@ -58,7 +58,7 @@ export default function YouTubeConverterPage() {
     try {
       console.log("Starting YouTube transcription for:", url)
 
-      const response = await fetch("/api/youtube-transcript", {
+      const response = await fetch("http://localhost:8000/api/youtube-transcript", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -83,6 +83,8 @@ export default function YouTubeConverterPage() {
   }
 
   const downloadTranscript = () => {
+    console.log("hello")
+    console.log("this is pdf url",transcriptResult)
     if (transcriptResult?.pdf_url) {
       window.open(transcriptResult.pdf_url, "_blank")
     }

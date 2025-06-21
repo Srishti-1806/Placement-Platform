@@ -1,8 +1,13 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
+# for transcribe pdf static files
+from fastapi.staticfiles import StaticFiles 
+# for pdf summirizer
+import os
+import shutil
 
 # Import our utilities
 from utils.ats_calculator import ATSCalculator
@@ -11,7 +16,7 @@ from utils.pdf_summarizer import PDFSummarizer
 from utils.youtube_converter import YouTubeConverter
 
 app = FastAPI(title="PlacementPro API", version="1.0.0")
-
+app.mount("/static", StaticFiles(directory="public"), name="static")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -98,22 +103,26 @@ async def search_jobs(request: JobSearchRequest):
         raise HTTPException(status_code=500, detail=f"Job search failed: {str(e)}")
 
 @app.post("/api/summarize-pdf")
-async def summarize_pdf(request: PDFSummaryRequest):
+async def summarize_pdf(file: UploadFile = File(...)):
     """Summarize PDF document"""
     try:
-        result = pdf_summarizer.summarize_pdf(request.file_path)
+        os.makedirs("temp", exist_ok=True)
+        file_location = f"temp/{file.filename}"
+        with open(file_location, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        result = pdf_summarizer.summarize_pdf(file_location)
+        # print("this is result boi",result)
         return result
     except Exception as e:
+        print("error",e)
         raise HTTPException(status_code=500, detail=f"PDF summarization failed: {str(e)}")
 
 @app.post("/api/youtube-transcript")
 async def convert_youtube(request: YouTubeRequest):
     """Convert YouTube video to transcript"""
     try:
-        result = youtube_converter.convert_to_transcript(
-            request.url, 
-            request.language
-        )
+        result = youtube_converter.youtube_to_transcript(request.url)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"YouTube conversion failed: {str(e)}")
