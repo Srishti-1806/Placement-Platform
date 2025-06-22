@@ -8,4 +8,14 @@ pandas==2.1.4
 numpy==1.24.4
 python-multipart==0.0.6
 pydantic==2.5.0
-yt-dlp==2024.5.27
+PyPDF2
+transformers
+yt_dlp
+whisper
+fpdf
+python-dotenv
+ffmpeg-python
+mediapipe
+opencv-python
+openai
+

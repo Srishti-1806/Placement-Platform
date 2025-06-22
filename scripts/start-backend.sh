@@ -13,3 +13,7 @@ mkdir -p temp
 # Start the FastAPI server
 echo "Starting FastAPI server on port 8000..."
 python main.py
+
+###############################################################
+docker exec -it ffmpeg sh
+docker-compose up --build
