@@ -39,18 +39,26 @@ export default function PDFSummaryPage() {
     try {
       const formData = new FormData()
       formData.append("file", file)
-
-      const response = await fetch("/api/summarize-pdf", {
+      const response = await fetch("http://localhost:8000/api/summarize-pdf", {
         method: "POST",
         body: formData,
       })
-
+      
       if (!response.ok) {
         throw new Error("Summarization failed")
       }
 
       const result = await response.json()
-      setSummaryResult(result)
+      console.log("this is result",result)
+      const responseData: SummaryResult = {
+        summary: result.summary,
+        original_word_count: result.word_count_original,
+        summary_word_count: result.word_count_summary,
+        compression_ratio: result.compressed_ratio,
+        pdf_url: result.pdf_path
+      }
+      console.log("this is responseDATA", responseData)
+      setSummaryResult(responseData)
     } catch (err) {
       setError("Failed to summarize PDF. Please try again.")
       console.error("Summarization error:", err)
