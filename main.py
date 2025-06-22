@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
+
 # for transcribe pdf static files
 from fastapi.staticfiles import StaticFiles 
 # for pdf summirizer
@@ -10,6 +11,19 @@ import os
 import shutil
 
 # Import our utilities
+=======
+from fastapi import UploadFile, File
+from fastapi.responses import JSONResponse
+import os
+import shutil
+from utils.transcriber import transcribe_audio
+from utils.body_language import analyze_body_language
+from utils.speech_analysis import analyze_speech
+from utils.feedback_generator import generate_feedback
+from utils.report_generator import generate_pdf_report
+from webcam_recorder import record_from_webcam
+from pathlib import Path
+
 from utils.ats_calculator import ATSCalculator
 from utils.job_scraper import JobScraper
 from utils.pdf_summarizer import PDFSummarizer
@@ -58,27 +72,17 @@ async def root():
 
 @app.post("/api/ats-calculator")
 async def calculate_ats_score(request: ATSRequest):
-    """Calculate ATS score between resume and job description"""
     try:
-        print(f"📊 Calculating ATS score...")
-        print(f"📝 Resume length: {len(request.resume_text)} characters")
-        print(f"💼 Job description length: {len(request.job_description)} characters")
-        
         result = ats_calculator.calculate_ats_score(
-            request.resume_text, 
+            request.resume_text,
             request.job_description
         )
-        
-        print(f"✅ ATS Score calculated: {result.get('overall_score', 0)}%")
         return result
-        
     except Exception as e:
-        print(f"❌ ATS calculation error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"ATS calculation failed: {str(e)}")
 
 @app.post("/api/jobs")
 async def search_jobs(request: JobSearchRequest):
-    """Search and scrape jobs from various sources"""
     try:
         jobs = job_scraper.search_jobs(
             keyword=request.keyword,
@@ -86,12 +90,9 @@ async def search_jobs(request: JobSearchRequest):
             experience=request.experience,
             job_type=request.job_type
         )
-        
-        # Pagination
         start_idx = (request.page - 1) * request.limit
         end_idx = start_idx + request.limit
         paginated_jobs = jobs[start_idx:end_idx]
-        
         return {
             "jobs": paginated_jobs,
             "total": len(jobs),
@@ -103,8 +104,12 @@ async def search_jobs(request: JobSearchRequest):
         raise HTTPException(status_code=500, detail=f"Job search failed: {str(e)}")
 
 @app.post("/api/summarize-pdf")
+
 async def summarize_pdf(file: UploadFile = File(...)):
     """Summarize PDF document"""
+=======
+async def summarize_pdf(request: PDFSummaryRequest):
+
     try:
         os.makedirs("temp", exist_ok=True)
         file_location = f"temp/{file.filename}"
@@ -120,16 +125,21 @@ async def summarize_pdf(file: UploadFile = File(...)):
 
 @app.post("/api/youtube-transcript")
 async def convert_youtube(request: YouTubeRequest):
-    """Convert YouTube video to transcript"""
     try:
+
         result = youtube_converter.youtube_to_transcript(request.url)
+=======
+        result = youtube_converter.convert_to_transcript(
+            request.url,
+            request.language
+        )
+
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"YouTube conversion failed: {str(e)}")
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint"""
     return {
         "status": "healthy",
         "services": {
@@ -140,12 +150,67 @@ async def health_check():
         }
     }
 
+class AnalysisResult(BaseModel):
+    transcript: str
+    speech_score: int
+    body_language_score: int
+    total_score: int
+    feedback: str
+    pdf_url: str
+
+@app.post("/analyze", response_model=AnalysisResult)
+async def analyze_video(file: UploadFile = File(...)):
+    os.makedirs("temp", exist_ok=True)
+    os.makedirs("static/reports", exist_ok=True)
+
+    filename = Path(file.filename).name
+    file_path = f"temp/{filename}"
+    with open(file_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    transcript = transcribe_audio(file_path)
+    speech_score = analyze_speech(file_path)
+    body_language_score = analyze_body_language(file_path)
+    feedback = generate_feedback(transcript, speech_score, body_language_score)
+
+    pdf_filename = filename.replace(".mp4", "_report.pdf")
+    pdf_path = f"static/reports/{pdf_filename}"
+    generate_pdf_report(transcript, speech_score, body_language_score, feedback, pdf_path)
+
+    return AnalysisResult(
+        transcript=transcript,
+        speech_score=speech_score,
+        body_language_score=body_language_score,
+        total_score=speech_score + body_language_score,
+        feedback=feedback,
+        pdf_url=f"/static/reports/{pdf_filename}"
+    )
+
+@app.get("/record-webcam", response_model=AnalysisResult)
+def record_and_analyze():
+    os.makedirs("temp", exist_ok=True)
+    os.makedirs("static/reports", exist_ok=True)
+
+    video_path = "temp/webcam_recording.mp4"
+    record_from_webcam(video_path)
+
+    transcript = transcribe_audio(video_path)
+    speech_score = analyze_speech(video_path)
+    body_language_score = analyze_body_language(video_path)
+    feedback = generate_feedback(transcript, speech_score, body_language_score)
+
+    pdf_filename = "webcam_recording_report.pdf"
+    pdf_path = f"static/reports/{pdf_filename}"
+    generate_pdf_report(transcript, speech_score, body_language_score, feedback, pdf_path)
+
+    return AnalysisResult(
+        transcript=transcript,
+        speech_score=speech_score,
+        body_language_score=body_language_score,
+        total_score=speech_score + body_language_score,
+        feedback=feedback,
+        pdf_url=f"/static/reports/{pdf_filename}"
+    )
+
 if __name__ == "__main__":
-    print("🚀 Starting PlacementPro API Server...")
-    print("📊 ATS Calculator: Ready")
-    print("💼 Job Scraper: Ready")
-    print("📄 PDF Summarizer: Ready")
-    print("🎥 YouTube Converter: Ready")
-    print("🌐 Server running on: http://localhost:8000")
-    
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
