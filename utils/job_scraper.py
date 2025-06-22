@@ -1,84 +1,73 @@
-import requests
-from bs4 import BeautifulSoup
-import json
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 import random
 from typing import List, Dict
 from datetime import datetime, timedelta
 
-class JobScraper:
-    def __init__(self):
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        self.session = requests.Session()
-        self.session.headers.update(self.headers)
-    
-    def scrape_naukri_jobs(self, keyword: str = "python developer", location: str = "bangalore", 
-                          pages: int = 5) -> List[Dict]:
-        """Scrape jobs from Naukri.com with fallback to mock data"""
+
+class JobScraperSelenium:
+    def __init__(self, driver_path: str):
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")  
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--log-level=3")
+
+        self.driver = webdriver.Chrome(service=Service(driver_path), options=chrome_options)
+        self.wait = WebDriverWait(self.driver, 10)
+
+    def scrape_naukri_jobs(self, keyword: str = "python developer", location: str = "bangalore",
+                           pages: int = 3) -> List[Dict]:
         jobs = []
-        
         try:
-            # Try to scrape real data first
-            base_url = "https://www.naukri.com"
-            search_url = f"{base_url}/{keyword.replace(' ', '-')}-jobs-in-{location.lower()}"
-            
-            for page in range(1, pages + 1):
+            search_url = f"https://www.naukri.com/{keyword.replace(' ', '-')}-jobs-in-{location.lower()}"
+            self.driver.get(search_url)
+
+            for page in range(pages):
+                self.wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'jobTuple')))
+                job_cards = self.driver.find_elements(By.CLASS_NAME, 'jobTuple')
+
+                for card in job_cards:
+                    try:
+                        job_data = self.extract_job_data(card)
+                        if job_data:
+                            jobs.append(job_data)
+                    except Exception as e:
+                        print(f"Error parsing job card: {e}")
+
+                # Go to next page
                 try:
-                    url = f"{search_url}?k={keyword}&l={location}&p={page}"
-                    response = self.session.get(url, timeout=10)
-                    
-                    if response.status_code == 200:
-                        soup = BeautifulSoup(response.content, 'html.parser')
-                        job_cards = soup.find_all('div', class_='jobTuple')
-                        
-                        for card in job_cards:
-                            job_data = self.extract_job_data(card, base_url)
-                            if job_data:
-                                jobs.append(job_data)
-                    
-                    # Add delay to avoid being blocked
-                    time.sleep(random.uniform(1, 3))
-                    
+                    next_button = self.driver.find_element(By.XPATH, '//a[@class="fright fs14 btn-secondary br2"]')
+                    if "disabled" in next_button.get_attribute("class"):
+                        break
+                    next_button.click()
+                    time.sleep(random.uniform(2, 4))
                 except Exception as e:
-                    print(f"Error scraping page {page}: {e}")
-                    continue
-        
+                    print("No next button or end of pagination:", e)
+                    break
+
         except Exception as e:
-            print(f"Error accessing Naukri.com: {e}")
-        
-        # If no real data scraped, use mock data
-        if not jobs:
-            jobs = self.get_mock_jobs(keyword, location)
-        
+            print(f"Error during scraping: {e}")
+
+        self.driver.quit()
         return jobs[:50]  # Limit to 50 jobs
-    
-    def extract_job_data(self, card, base_url: str) -> Dict:
-        """Extract job data from a job card"""
+
+    def extract_job_data(self, card) -> Dict:
         try:
-            title_elem = card.find('a', class_='title')
-            title = title_elem.text.strip() if title_elem else "N/A"
-            job_url = base_url + title_elem['href'] if title_elem and title_elem.get('href') else ""
-            
-            company_elem = card.find('a', class_='subTitle')
-            company = company_elem.text.strip() if company_elem else "N/A"
-            
-            experience_elem = card.find('span', class_='expwdth')
-            experience = experience_elem.text.strip() if experience_elem else "N/A"
-            
-            salary_elem = card.find('span', class_='salary')
-            salary = salary_elem.text.strip() if salary_elem else "Not disclosed"
-            
-            location_elem = card.find('span', class_='locWdth')
-            location = location_elem.text.strip() if location_elem else "N/A"
-            
-            skills_elem = card.find('span', class_='skill')
-            skills = skills_elem.text.strip() if skills_elem else ""
-            
-            posted_elem = card.find('span', class_='date')
-            posted_date = posted_elem.text.strip() if posted_elem else "Recently"
-            
+            title = card.find_element(By.CLASS_NAME, "title").text
+            job_url = card.find_element(By.CLASS_NAME, "title").get_attribute("href")
+            company = card.find_element(By.CLASS_NAME, "subTitle").text
+            location = card.find_element(By.CLASS_NAME, "locWdth").text
+            experience = card.find_element(By.CLASS_NAME, "expwdth").text
+            salary = card.find_element(By.CLASS_NAME, "salary").text if self.safe_find(card, "salary") else "Not disclosed"
+            skills = card.find_element(By.CLASS_NAME, "tags").text if self.safe_find(card, "tags") else ""
+            posted = card.find_element(By.CLASS_NAME, "type br2 fleft grey").text if self.safe_find(card, "type br2 fleft grey") else "Recently"
+
             return {
                 "id": hash(title + company + location) % 10000,
                 "title": title,
@@ -87,109 +76,28 @@ class JobScraper:
                 "experience": experience,
                 "salary": salary,
                 "skills": skills.split(', ') if skills else [],
-                "posted_date": posted_date,
+                "posted_date": posted,
                 "job_url": job_url,
                 "description": f"Looking for {title} with experience in {skills}. Join {company} team.",
                 "job_type": "Full-time",
                 "remote": "hybrid" if "remote" in title.lower() else "office"
             }
         except Exception as e:
-            print(f"Error extracting job data: {e}")
+            print("Extraction failed:", e)
             return None
-    
-    def get_mock_jobs(self, keyword: str = "python developer", location: str = "bangalore") -> List[Dict]:
-        """Generate realistic mock job data when scraping fails"""
-        companies = [
-            "TCS", "Infosys", "Wipro", "Accenture", "IBM", "Microsoft", "Google", "Amazon",
-            "Flipkart", "Paytm", "Zomato", "Swiggy", "Ola", "Uber", "PhonePe", "BYJU'S",
-            "Freshworks", "Zoho", "Razorpay", "Cred", "Dream11", "Unacademy", "Vedantu"
-        ]
-        
-        job_titles = [
-            "Python Developer", "Full Stack Developer", "Backend Developer", "Software Engineer",
-            "Senior Python Developer", "Django Developer", "Flask Developer", "Data Engineer",
-            "DevOps Engineer", "Machine Learning Engineer", "AI Developer", "API Developer"
-        ]
-        
-        locations = [
-            "Bangalore", "Mumbai", "Delhi", "Hyderabad", "Chennai", "Pune", "Kolkata", "Ahmedabad"
-        ]
-        
-        skills_pool = [
-            ["Python", "Django", "REST API", "PostgreSQL"],
-            ["Python", "Flask", "MongoDB", "Docker"],
-            ["Python", "FastAPI", "Redis", "AWS"],
-            ["Python", "React", "Node.js", "MySQL"],
-            ["Python", "Machine Learning", "TensorFlow", "Pandas"],
-            ["Python", "DevOps", "Kubernetes", "Jenkins"],
-            ["Python", "Data Science", "NumPy", "Matplotlib"],
-            ["Python", "Web Scraping", "Selenium", "BeautifulSoup"]
-        ]
-        
-        jobs = []
-        for i in range(50):
-            company = random.choice(companies)
-            title = random.choice(job_titles)
-            job_location = random.choice(locations)
-            skills = random.choice(skills_pool)
-            
-            experience_years = random.choice(["0-1", "1-3", "2-4", "3-5", "4-7", "5-8"])
-            salary_range = random.choice([
-                "₹3-6 LPA", "₹5-9 LPA", "₹7-12 LPA", "₹10-18 LPA", "₹15-25 LPA", "Not disclosed"
-            ])
-            
-            posted_days = random.randint(1, 30)
-            posted_date = (datetime.now() - timedelta(days=posted_days)).strftime("%d %b %Y")
-            
-            jobs.append({
-                "id": 1000 + i,
-                "title": title,
-                "company": company,
-                "location": job_location,
-                "experience": f"{experience_years} years",
-                "salary": salary_range,
-                "skills": skills,
-                "posted_date": posted_date,
-                "job_url": f"https://example.com/job/{1000+i}",
-                "description": f"We are looking for a skilled {title} to join our {company} team. "
-                             f"The ideal candidate should have experience with {', '.join(skills[:3])}. "
-                             f"This is a great opportunity to work with cutting-edge technologies.",
-                "job_type": random.choice(["Full-time", "Contract", "Internship"]),
-                "remote": random.choice(["office", "remote", "hybrid"]),
-                "applicants": random.randint(10, 500),
-                "rating": round(random.uniform(3.5, 4.8), 1)
-            })
-        
-        return jobs
-    
-    def search_jobs(self, keyword: str = "", location: str = "", experience: str = "", 
-                   salary_min: int = 0, job_type: str = "") -> List[Dict]:
-        """Search jobs with filters"""
-        all_jobs = self.scrape_naukri_jobs(keyword or "developer", location or "bangalore")
-        
-        filtered_jobs = []
-        for job in all_jobs:
-            # Filter by keyword
-            if keyword and keyword.lower() not in job['title'].lower():
-                continue
-            
-            # Filter by location
-            if location and location.lower() not in job['location'].lower():
-                continue
-            
-            # Filter by job type
-            if job_type and job_type.lower() != job['job_type'].lower():
-                continue
-            
-            filtered_jobs.append(job)
-        
-        return filtered_jobs
 
-# Example usage
+    def safe_find(self, element, class_name: str):
+        try:
+            element.find_element(By.CLASS_NAME, class_name)
+            return True
+        except:
+            return False
+
+
+
 if __name__ == "__main__":
-    scraper = JobScraper()
+    scraper = JobScraperSelenium(driver_path="path_to_chromedriver")  # <-- Change path
     jobs = scraper.scrape_naukri_jobs("python developer", "bangalore", 2)
-    
     print(f"Found {len(jobs)} jobs:")
     for job in jobs[:5]:
         print(f"- {job['title']} at {job['company']} ({job['location']})")
