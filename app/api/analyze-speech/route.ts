@@ -9,11 +9,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    // Create FormData for the Python backend
     const backendFormData = new FormData()
     backendFormData.append("file", file)
 
-    // Call the Python FastAPI backend
     const response = await fetch("http://localhost:8000/analyze", {
       method: "POST",
       body: backendFormData,
@@ -23,8 +21,15 @@ export async function POST(request: NextRequest) {
       throw new Error("Backend analysis failed")
     }
 
-    const result = await response.json()
-    return NextResponse.json(result)
+    const pdfBlob = await response.blob()
+
+    return new NextResponse(pdfBlob, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": "attachment; filename=analysis_report.pdf",
+      },
+    })
   } catch (error) {
     console.error("Analysis error:", error)
     return NextResponse.json({ error: "Analysis failed. Please try again." }, { status: 500 })
