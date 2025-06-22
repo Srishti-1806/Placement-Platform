@@ -3,9 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
-from fastapi import FastAPI, UploadFile, File
+from fastapi import UploadFile, File
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 import os
 import shutil
 from utils.transcriber import transcribe_audio
@@ -15,9 +14,6 @@ from utils.feedback_generator import generate_feedback
 from utils.report_generator import generate_pdf_report
 from webcam_recorder import record_from_webcam
 from pathlib import Path
-
-
-# Import our utilities
 from utils.ats_calculator import ATSCalculator
 from utils.job_scraper import JobScraper
 from utils.pdf_summarizer import PDFSummarizer
@@ -66,27 +62,17 @@ async def root():
 
 @app.post("/api/ats-calculator")
 async def calculate_ats_score(request: ATSRequest):
-    """Calculate ATS score between resume and job description"""
     try:
-        print(f"📊 Calculating ATS score...")
-        print(f"📝 Resume length: {len(request.resume_text)} characters")
-        print(f"💼 Job description length: {len(request.job_description)} characters")
-        
         result = ats_calculator.calculate_ats_score(
-            request.resume_text, 
+            request.resume_text,
             request.job_description
         )
-        
-        print(f"✅ ATS Score calculated: {result.get('overall_score', 0)}%")
         return result
-        
     except Exception as e:
-        print(f"❌ ATS calculation error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"ATS calculation failed: {str(e)}")
 
 @app.post("/api/jobs")
 async def search_jobs(request: JobSearchRequest):
-    """Search and scrape jobs from various sources"""
     try:
         jobs = job_scraper.search_jobs(
             keyword=request.keyword,
@@ -94,12 +80,9 @@ async def search_jobs(request: JobSearchRequest):
             experience=request.experience,
             job_type=request.job_type
         )
-        
-        # Pagination
         start_idx = (request.page - 1) * request.limit
         end_idx = start_idx + request.limit
         paginated_jobs = jobs[start_idx:end_idx]
-        
         return {
             "jobs": paginated_jobs,
             "total": len(jobs),
@@ -112,7 +95,6 @@ async def search_jobs(request: JobSearchRequest):
 
 @app.post("/api/summarize-pdf")
 async def summarize_pdf(request: PDFSummaryRequest):
-    """Summarize PDF document"""
     try:
         result = pdf_summarizer.summarize_pdf(request.file_path)
         return result
@@ -121,10 +103,9 @@ async def summarize_pdf(request: PDFSummaryRequest):
 
 @app.post("/api/youtube-transcript")
 async def convert_youtube(request: YouTubeRequest):
-    """Convert YouTube video to transcript"""
     try:
         result = youtube_converter.convert_to_transcript(
-            request.url, 
+            request.url,
             request.language
         )
         return result
@@ -133,7 +114,6 @@ async def convert_youtube(request: YouTubeRequest):
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint"""
     return {
         "status": "healthy",
         "services": {
@@ -207,11 +187,4 @@ def record_and_analyze():
     )
 
 if __name__ == "__main__":
-    print("🚀 Starting PlacementPro API Server...")
-    print("📊 ATS Calculator: Ready")
-    print("💼 Job Scraper: Ready")
-    print("📄 PDF Summarizer: Ready")
-    print("🎥 YouTube Converter: Ready")
-    print("🌐 Server running on: http://localhost:8000")
-    
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
