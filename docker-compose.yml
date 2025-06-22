@@ -1,0 +1,10 @@
+version: '3.9'
+
+services:
+  ffmpeg:
+    image: jrottenberg/ffmpeg:latest
+    container_name: ffmpeg
+    entrypoint: ["sleep", "infinity"]
+    volumes:
+      - ./webcam_recorder.py:/app/webcam_recorder.py
+      - ./app/api/analyze-speech/route.ts:/app/route.ts
