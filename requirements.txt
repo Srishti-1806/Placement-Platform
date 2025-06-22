@@ -13,3 +13,8 @@ transformers
 yt_dlp
 whisper
 fpdf
+python-dotenv
+ffmpeg-python
+mediapipe
+opencv-python
+openai
