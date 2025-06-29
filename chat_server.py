@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, request
 from flask_socketio import SocketIO, send, emit
 from flask_cors import CORS
 import time
@@ -68,7 +68,7 @@ def index():
     ''')
 
 @socketio.on('connect')
-def handle_connect():
+def handle_connect(auth):
     connected_users.add(request.sid)
     emit('user_count', len(connected_users), broadcast=True)
     print(f'🟢 User connected: {request.sid} (Total: {len(connected_users)})')
