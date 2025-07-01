@@ -1,305 +1,271 @@
-"use client"
+"use client";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Code,
+  BookOpen,
+  Star,
+  Zap,
+  Trophy,
+  Target,
+  Sparkles,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { InteractiveCard } from "@/components/interactive-card";
+import { GalaxyHover } from "@/components/galaxy-hover";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
-import { FileIcon as FileUser, Download, Eye, Palette, Plus, Trash2, Star, Zap, Award } from "lucide-react"
-import { motion } from "framer-motion"
-import { InteractiveCard } from "@/components/interactive-card"
-
-const templates = [
+const dsaSheets = [
   {
     id: 1,
-    name: "Executive Pro",
-    preview: "/placeholder.svg?height=300&width=200",
-    color: "blue",
-    premium: true,
-    description: "Perfect for senior roles",
+    title: "Striver's SDE Sheet",
+    description: "180 most important coding interview questions",
+    problems: 180,
+    completed: 45,
+    difficulty: "Mixed",
+    category: "Interview Prep",
+    rating: 4.9,
+    topics: ["Arrays", "Strings", "Trees", "Graphs", "DP"],
+    icon: <Target className="h-5 w-5" />,
+    glowColor: "purple" as const,
   },
   {
     id: 2,
-    name: "Tech Modern",
-    preview: "/placeholder.svg?height=300&width=200",
-    color: "green",
-    premium: false,
-    description: "Ideal for tech professionals",
+    title: "Love Babbar 450",
+    description: "450 DSA questions for complete preparation",
+    problems: 450,
+    completed: 120,
+    difficulty: "Mixed",
+    category: "Complete Prep",
+    rating: 4.8,
+    topics: ["Arrays", "Matrix", "Strings", "Trees", "Graphs"],
+    icon: <Trophy className="h-5 w-5" />,
+    glowColor: "cyan" as const,
   },
   {
     id: 3,
-    name: "Creative Edge",
-    preview: "/placeholder.svg?height=300&width=200",
-    color: "purple",
-    premium: true,
-    description: "Stand out in creative fields",
+    title: "Blind 75",
+    description: "75 essential coding interview questions",
+    problems: 75,
+    completed: 25,
+    difficulty: "Medium-Hard",
+    category: "Core Problems",
+    rating: 4.9,
+    topics: ["Arrays", "Trees", "Graphs", "DP", "Strings"],
+    icon: <Zap className="h-5 w-5" />,
+    glowColor: "yellow" as const,
   },
-  {
-    id: 4,
-    name: "Minimal Clean",
-    preview: "/placeholder.svg?height=300&width=200",
-    color: "gray",
-    premium: false,
-    description: "Clean and professional",
-  },
-]
+];
 
-export default function ResumeBuilderPage() {
-  const [selectedTemplate, setSelectedTemplate] = useState(templates[0])
-  const [currentStep, setCurrentStep] = useState(0)
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    location: "",
-    linkedin: "",
-    portfolio: "",
-    summary: "",
-    experience: [{ company: "", position: "", duration: "", description: "" }],
-    education: [{ institution: "", degree: "", year: "", gpa: "" }],
-    skills: [],
-    projects: [{ name: "", description: "", technologies: "", link: "" }],
-    certifications: [{ name: "", issuer: "", date: "" }],
-    languages: [],
-    achievements: [],
-    interests: "",
-  })
-
-  const [newSkill, setNewSkill] = useState("")
-  const [atsScore, setAtsScore] = useState(0)
-
-  const steps = [
-    { id: 0, title: "Personal Info", icon: FileUser },
-    { id: 1, title: "Experience", icon: Award },
-    { id: 2, title: "Education", icon: Star },
-    { id: 3, title: "Skills", icon: Zap },
-    { id: 4, title: "Preview", icon: Eye },
-  ]
-
-  const addSkill = () => {
-    if (newSkill.trim()) {
-      setFormData((prev) => ({
-        ...prev,
-        skills: [...prev.skills, newSkill.trim()],
-      }))
-      setNewSkill("")
-    }
-  }
-
-  const removeSkill = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      skills: prev.skills.filter((_, i) => i !== index),
-    }))
-  }
-
-  const addExperience = () => {
-    setFormData((prev) => ({
-      ...prev,
-      experience: [...prev.experience, { company: "", position: "", duration: "", description: "" }],
-    }))
-  }
-
-  const updateExperience = (index: number, field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      experience: prev.experience.map((exp, i) => (i === index ? { ...exp, [field]: value } : exp)),
-    }))
-  }
-
-  const calculateATS = () => {
-    let score = 0
-    if (formData.fullName) score += 10
-    if (formData.email) score += 10
-    if (formData.phone) score += 10
-    if (formData.summary) score += 15
-    if (formData.experience[0].company) score += 20
-    if (formData.skills.length > 0) score += 15
-    if (formData.education[0].institution) score += 10
-    if (formData.projects[0].name) score += 10
-
-    setAtsScore(score)
-  }
-
+export default function DSASheetsPage() {
   return (
-    <div className="min-h-screen pt-20 bg-[#f3e8ff] dark:bg-[#1f1b2e]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Professional Resume Builder
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Create ATS-optimized resumes with AI-powered suggestions and professional templates.
-            </p>
-          </div>
+    <div className="min-h-screen pt-20 px-4 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-gray-900 to-cyan-900/20" />
 
-          {/* Steps */}
-          <div className="mb-8">
-            <div className="flex justify-center space-x-4 mb-4">
-              {steps.map((step) => (
-                <motion.button
-                  key={step.id}
-                  onClick={() => setCurrentStep(step.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
-                    currentStep === step.id
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <step.icon className="h-4 w-4" />
-                  <span className="text-sm font-medium">{step.title}</span>
-                </motion.button>
-              ))}
-            </div>
-            <Progress value={(currentStep + 1) * 20} className="max-w-md mx-auto" />
-          </div>
+      {/* Floating particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-purple-400/30 rounded-full"
+            animate={{
+              x: [0, Math.random() * 100, Math.random() * -100, 0],
+              y: [0, Math.random() * -100, Math.random() * 100, 0],
+              opacity: [0.3, 0.8, 0.3],
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "linear",
+            }}
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+          />
+        ))}
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Templates */}
-            <div className="lg:col-span-1">
-              <InteractiveCard
-                title="Choose Template"
-                description="Select a professional template"
-                icon={<Palette className="h-5 w-5 text-purple-400" />}
-                glowColor="purple"
-              >
-                <div className="grid grid-cols-1 gap-4">
-                  {templates.map((template) => (
-                    <motion.div
-                      key={template.id}
-                      className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
-                        selectedTemplate.id === template.id
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900"
-                          : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
-                      }`}
-                      onClick={() => setSelectedTemplate(template)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-medium dark:text-white">{template.name}</p>
-                        {template.premium && (
-                          <Badge variant="secondary" className="text-xs">
-                            <Star className="h-3 w-3 mr-1" />
-                            Pro
-                          </Badge>
-                        )}
-                      </div>
-                      <img
-                        src={template.preview || "/placeholder.svg"}
-                        alt={template.name}
-                        className="w-full h-24 object-cover rounded mb-2"
-                      />
-                      <p className="text-xs text-gray-600 dark:text-gray-300">{template.description}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </InteractiveCard>
-            </div>
+      <div className="max-w-7xl mx-auto relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          {/* Hero Section */}
+          <div className="text-center mb-16">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="flex items-center justify-center mb-6"
+            >
+              <Sparkles className="h-8 w-8 text-purple-400 mr-3" />
+              <span className="text-purple-400 font-medium text-lg">
+                Algorithm Galaxy
+              </span>
+            </motion.div>
 
-            {/* Form Content */}
-            <div className="lg:col-span-2">
-              <InteractiveCard
-                title="Resume Information"
-                description="Fill in your details step by step"
-                icon={<FileUser className="h-5 w-5 text-cyan-400" />}
-                glowColor="cyan"
-              >
-                <Tabs value={currentStep.toString()} className="w-full">
-                  {/* Personal Info */}
-                  <TabsContent value="0" className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="fullName">Full Name *</Label>
-                        <Input
-                          id="fullName"
-                          value={formData.fullName}
-                          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                          placeholder="John Doe"
-                          className="dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">Email *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          placeholder="john@example.com"
-                          className="dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                        />
-                      </div>
-                    </div>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-5xl md:text-6xl font-bold mb-6 leading-tight"
+            >
+              <span className="text-white">DSA Practice</span>{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400">
+                Sheets
+              </span>
+            </motion.h1>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="phone">Phone</Label>
-                        <Input
-                          id="phone"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder="+91 98765 43210"
-                          className="dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="location">Location</Label>
-                        <Input
-                          id="location"
-                          value={formData.location}
-                          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                          placeholder="Mumbai, India"
-                          className="dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                        />
-                      </div>
-                    </div>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed"
+            >
+              Master Data Structures and Algorithms with curated question sets.
+              Navigate through coding challenges and unlock your programming
+              potential.
+            </motion.p>
 
-                    <div>
-                      <Label htmlFor="summary">Professional Summary</Label>
-                      <Textarea
-                        id="summary"
-                        value={formData.summary}
-                        onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                        placeholder="Brief summary of your professional background..."
-                        rows={4}
-                        className="dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-                      />
-                    </div>
-                  </TabsContent>
-
-                  {/* Additional Tabs (same styling principles apply) */}
-                  {/* ... experience, skills, etc. continue unmodified with dark styles added as needed ... */}
-                </Tabs>
-
-                <div className="flex justify-between mt-6">
-                  <Button
-                    variant="outline"
-                    onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-                    disabled={currentStep === 0}
+            {/* Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="grid grid-cols-3 gap-8 max-w-2xl mx-auto mb-12"
+            >
+              {[
+                {
+                  number: "700+",
+                  label: "Problems",
+                  color: "from-purple-400 to-purple-600",
+                },
+                {
+                  number: "190",
+                  label: "Completed",
+                  color: "from-cyan-400 to-cyan-600",
+                },
+                {
+                  number: "27%",
+                  label: "Progress",
+                  color: "from-yellow-400 to-yellow-600",
+                },
+              ].map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div
+                    className={`text-3xl font-bold bg-gradient-to-r ${stat.color} text-transparent bg-clip-text`}
                   >
-                    Previous
-                  </Button>
-                  <Button onClick={() => setCurrentStep(Math.min(4, currentStep + 1))} disabled={currentStep === 4}>
-                    Next
-                  </Button>
+                    {stat.number}
+                  </div>
+                  <div className="text-gray-400 text-sm">{stat.label}</div>
                 </div>
-              </InteractiveCard>
-            </div>
-
-            {/* ATS and Preview Cards (no functional change) */}
-            {/* ... Apply same dark mode bg/text as demonstrated above ... */}
-
+              ))}
+            </motion.div>
           </div>
+
+          {/* DSA Sheets Grid */}
+          <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {dsaSheets.map((sheet, index) => (
+              <motion.div
+                key={sheet.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 + index * 0.15, duration: 0.6 }}
+              >
+                <GalaxyHover>
+                  <InteractiveCard
+                    title={sheet.title}
+                    description={sheet.description}
+                    icon={sheet.icon}
+                    glowColor={sheet.glowColor}
+                  >
+                    <div className="space-y-4">
+                      {/* Progress Section */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-400">
+                          Progress
+                        </span>
+                        <span className="text-sm font-bold text-white bg-gradient-to-r from-purple-400 to-pink-400 text-transparent bg-clip-text">
+                          {sheet.completed}/{sheet.problems}
+                        </span>
+                      </div>
+
+                      <div className="relative">
+                        <Progress
+                          value={(sheet.completed / sheet.problems) * 100}
+                          className="h-2 bg-gray-800"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full opacity-20 blur-sm" />
+                      </div>
+
+                      {/* Topics */}
+                      <div className="flex flex-wrap gap-2">
+                        {sheet.topics.map((topic, idx) => (
+                          <Badge
+                            key={idx}
+                            variant="secondary"
+                            className="rounded-full px-3 py-1 text-xs bg-gray-800/60 text-gray-300 border border-gray-700 hover:border-purple-500/50 transition-all duration-200"
+                          >
+                            {topic}
+                          </Badge>
+                        ))}
+                      </div>
+
+                      {/* Rating and Difficulty */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center text-yellow-400 font-medium">
+                          <Star className="h-4 w-4 mr-1 fill-current" />
+                          <span className="text-white">{sheet.rating}</span>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className="text-xs px-3 py-1 border-cyan-500/50 text-cyan-300 bg-cyan-500/10"
+                        >
+                          {sheet.difficulty}
+                        </Badge>
+                      </div>
+
+                      {/* CTA Button */}
+                      <Button className="w-full mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300">
+                        <BookOpen className="h-4 w-4 mr-2" />
+                        Start Practice
+                      </Button>
+                    </div>
+                  </InteractiveCard>
+                </GalaxyHover>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Additional CTA Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2, duration: 0.6 }}
+            className="mt-16 text-center"
+          >
+            <div className="bg-gradient-to-r from-purple-600/20 to-cyan-600/20 backdrop-blur-md border border-gray-700 rounded-2xl p-8 max-w-2xl mx-auto">
+              <Code className="h-12 w-12 text-purple-400 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-white mb-4">
+                Ready to Level Up?
+              </h3>
+              <p className="text-gray-300 mb-6">
+                Join thousands of developers mastering algorithms and landing
+                their dream jobs.
+              </p>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white border-0 shadow-lg shadow-cyan-500/25"
+              >
+                View All Sheets
+              </Button>
+            </div>
+          </motion.div>
         </motion.div>
       </div>
     </div>
-  )
+  );
 }
