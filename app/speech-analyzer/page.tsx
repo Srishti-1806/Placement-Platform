@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
+import { AuthGuard } from "@/components/auth-guard";
 
 interface AnalysisResult {
   transcript: string;
@@ -118,908 +119,914 @@ export default function SpeechAnalyzerPage() {
   };
 
   return (
-    <div className="min-h-screen pt-20 relative overflow-hidden">
-      {/* Ultra-vibrant animated background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-cyan-900"></div>
-      <div className="absolute inset-0 bg-gradient-to-tr from-pink-900/60 via-transparent to-green-900/60"></div>
-      <div className="absolute inset-0 bg-gradient-to-bl from-orange-900/40 via-transparent to-purple-900/40"></div>
+    <AuthGuard>
+      <div className="min-h-screen pt-20 relative overflow-hidden">
+        {/* Ultra-vibrant animated background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-cyan-900"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-pink-900/60 via-transparent to-green-900/60"></div>
+        <div className="absolute inset-0 bg-gradient-to-bl from-orange-900/40 via-transparent to-purple-900/40"></div>
 
-      {/* Dynamic floating orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <motion.div
-            key={i}
-            animate={{
-              scale: [1, 1.5, 1],
-              rotate: [0, 360],
-              opacity: [0.3, 0.8, 0.3],
-              x: [0, Math.random() * 100 - 50],
-              y: [0, Math.random() * 100 - 50],
-            }}
-            transition={{
-              duration: 8 + Math.random() * 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.5,
-            }}
-            className={`absolute w-24 h-24 rounded-full blur-xl ${
-              [
-                "bg-gradient-to-r from-cyan-400/20 to-blue-600/20",
-                "bg-gradient-to-r from-pink-400/20 to-purple-600/20",
-                "bg-gradient-to-r from-green-400/20 to-emerald-600/20",
-                "bg-gradient-to-r from-yellow-400/20 to-orange-600/20",
-                "bg-gradient-to-r from-red-400/20 to-pink-600/20",
-                "bg-gradient-to-r from-violet-400/20 to-purple-600/20",
-              ][i % 6]
-            }`}
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
-      </div>
+        {/* Dynamic floating orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <motion.div
+              key={i}
+              animate={{
+                scale: [1, 1.5, 1],
+                rotate: [0, 360],
+                opacity: [0.3, 0.8, 0.3],
+                x: [0, Math.random() * 100 - 50],
+                y: [0, Math.random() * 100 - 50],
+              }}
+              transition={{
+                duration: 8 + Math.random() * 4,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: i * 0.5,
+              }}
+              className={`absolute w-24 h-24 rounded-full blur-xl ${
+                [
+                  "bg-gradient-to-r from-cyan-400/20 to-blue-600/20",
+                  "bg-gradient-to-r from-pink-400/20 to-purple-600/20",
+                  "bg-gradient-to-r from-green-400/20 to-emerald-600/20",
+                  "bg-gradient-to-r from-yellow-400/20 to-orange-600/20",
+                  "bg-gradient-to-r from-red-400/20 to-pink-600/20",
+                  "bg-gradient-to-r from-violet-400/20 to-purple-600/20",
+                ][i % 6]
+              }`}
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+            />
+          ))}
+        </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Enhanced Hero Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 60, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="text-center mb-20"
-        >
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Enhanced Hero Section */}
           <motion.div
-            className="flex items-center justify-center mb-10"
-            whileHover={{ scale: 1.15, rotate: 10 }}
-            transition={{ type: "spring", stiffness: 300 }}
+            initial={{ opacity: 0, y: 60, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+            className="text-center mb-20"
           >
             <motion.div
-              className="relative p-6 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full shadow-2xl"
-              animate={{
-                boxShadow: [
-                  "0 0 30px rgba(59, 130, 246, 0.6)",
-                  "0 0 60px rgba(147, 51, 234, 0.8)",
-                  "0 0 30px rgba(6, 182, 212, 0.6)",
-                ],
-              }}
-              transition={{ duration: 3, repeat: Infinity }}
+              className="flex items-center justify-center mb-10"
+              whileHover={{ scale: 1.15, rotate: 10 }}
+              transition={{ type: "spring", stiffness: 300 }}
             >
-              <Brain className="h-12 w-12 text-white" />
               <motion.div
-                className="absolute -inset-2 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 rounded-full opacity-40 blur-lg"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-              />
+                className="relative p-6 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full shadow-2xl"
+                animate={{
+                  boxShadow: [
+                    "0 0 30px rgba(59, 130, 246, 0.6)",
+                    "0 0 60px rgba(147, 51, 234, 0.8)",
+                    "0 0 30px rgba(6, 182, 212, 0.6)",
+                  ],
+                }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
+                <Brain className="h-12 w-12 text-white" />
+                <motion.div
+                  className="absolute -inset-2 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 rounded-full opacity-40 blur-lg"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                />
+              </motion.div>
+            </motion.div>
+
+            <motion.h1
+              className="text-6xl md:text-8xl font-black text-white mb-8 leading-tight"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 1 }}
+            >
+              AI Speech &{" "}
+              <motion.span
+                className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400"
+                animate={{
+                  backgroundPosition: ["0%", "100%", "0%"],
+                }}
+                transition={{ duration: 4, repeat: Infinity }}
+                style={{ backgroundSize: "300% 300%" }}
+              >
+                Gesture
+              </motion.span>
+              <br />
+              <motion.span
+                className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-blue-400 to-purple-400"
+                animate={{
+                  backgroundPosition: ["100%", "0%", "100%"],
+                }}
+                transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
+                style={{ backgroundSize: "300% 300%" }}
+              >
+                Analyzer
+              </motion.span>
+              <motion.div
+                className="inline-block ml-4"
+                animate={{
+                  rotate: [0, 15, -15, 0],
+                  scale: [1, 1.2, 1],
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Sparkles className="h-12 w-12 text-yellow-400" />
+              </motion.div>
+            </motion.h1>
+
+            <motion.p
+              className="text-2xl md:text-3xl text-gray-100 max-w-5xl mx-auto leading-relaxed font-light"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 1 }}
+            >
+              Transform your presentation skills with{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-bold">
+                cutting-edge AI analysis
+              </span>{" "}
+              of speech patterns, body language, and communication
+              effectiveness.
+            </motion.p>
+
+            {/* Floating stats */}
+            <motion.div
+              className="flex justify-center space-x-12 mt-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9, duration: 0.8 }}
+            >
+              {[
+                { icon: Users, value: "50K+", label: "Analyzed" },
+                { icon: Award, value: "95%", label: "Accuracy" },
+                { icon: TrendingUp, value: "4.9", label: "Rating" },
+              ].map((stat, index) => (
+                <motion.div
+                  key={index}
+                  animate={{ y: [0, -15, 0] }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    delay: index * 0.4,
+                  }}
+                  className="text-center"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    className="w-16 h-16 mx-auto mb-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center"
+                  >
+                    <stat.icon className="h-8 w-8 text-white" />
+                  </motion.div>
+                  <div className="text-2xl font-bold text-white">
+                    {stat.value}
+                  </div>
+                  <div className="text-gray-300 text-sm">{stat.label}</div>
+                </motion.div>
+              ))}
             </motion.div>
           </motion.div>
 
-          <motion.h1
-            className="text-6xl md:text-8xl font-black text-white mb-8 leading-tight"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 1 }}
-          >
-            AI Speech &{" "}
-            <motion.span
-              className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400"
-              animate={{
-                backgroundPosition: ["0%", "100%", "0%"],
-              }}
-              transition={{ duration: 4, repeat: Infinity }}
-              style={{ backgroundSize: "300% 300%" }}
-            >
-              Gesture
-            </motion.span>
-            <br />
-            <motion.span
-              className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-blue-400 to-purple-400"
-              animate={{
-                backgroundPosition: ["100%", "0%", "100%"],
-              }}
-              transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
-              style={{ backgroundSize: "300% 300%" }}
-            >
-              Analyzer
-            </motion.span>
-            <motion.div
-              className="inline-block ml-4"
-              animate={{
-                rotate: [0, 15, -15, 0],
-                scale: [1, 1.2, 1],
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Sparkles className="h-12 w-12 text-yellow-400" />
-            </motion.div>
-          </motion.h1>
-
-          <motion.p
-            className="text-2xl md:text-3xl text-gray-100 max-w-5xl mx-auto leading-relaxed font-light"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 1 }}
-          >
-            Transform your presentation skills with{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-bold">
-              cutting-edge AI analysis
-            </span>{" "}
-            of speech patterns, body language, and communication effectiveness.
-          </motion.p>
-
-          {/* Floating stats */}
+          {/* Enhanced Features Grid */}
           <motion.div
-            className="flex justify-center space-x-12 mt-12"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9, duration: 0.8 }}
+            transition={{ duration: 1, delay: 1.2 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20"
           >
             {[
-              { icon: Users, value: "50K+", label: "Analyzed" },
-              { icon: Award, value: "95%", label: "Accuracy" },
-              { icon: TrendingUp, value: "4.9", label: "Rating" },
-            ].map((stat, index) => (
+              {
+                icon: Mic,
+                title: "Speech Analysis",
+                description: "Advanced voice pattern recognition with AI",
+                gradient: "from-blue-500 to-cyan-500",
+                bgGradient: "from-blue-900/30 to-cyan-900/30",
+                borderColor: "border-blue-500/30",
+              },
+              {
+                icon: Eye,
+                title: "Gesture Detection",
+                description: "Computer vision body language analysis",
+                gradient: "from-purple-500 to-pink-500",
+                bgGradient: "from-purple-900/30 to-pink-900/30",
+                borderColor: "border-purple-500/30",
+              },
+              {
+                icon: Waves,
+                title: "Voice Modulation",
+                description: "Tone, pace, and clarity assessment",
+                gradient: "from-green-500 to-emerald-500",
+                bgGradient: "from-green-900/30 to-emerald-900/30",
+                borderColor: "border-green-500/30",
+              },
+              {
+                icon: Target,
+                title: "AI Feedback",
+                description: "Personalized improvement suggestions",
+                gradient: "from-orange-500 to-red-500",
+                bgGradient: "from-orange-900/30 to-red-900/30",
+                borderColor: "border-orange-500/30",
+              },
+            ].map((feature, index) => (
               <motion.div
                 key={index}
-                animate={{ y: [0, -15, 0] }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  delay: index * 0.4,
+                initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 1.4 + index * 0.1, duration: 0.8 }}
+                whileHover={{
+                  scale: 1.08,
+                  y: -15,
+                  transition: { type: "spring", stiffness: 300 },
                 }}
-                className="text-center"
               >
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className="w-16 h-16 mx-auto mb-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center"
+                <Card
+                  className={`bg-gradient-to-br ${feature.bgGradient} border ${feature.borderColor} backdrop-blur-xl hover:shadow-2xl transition-all duration-500 h-full relative overflow-hidden group`}
                 >
-                  <stat.icon className="h-8 w-8 text-white" />
-                </motion.div>
-                <div className="text-2xl font-bold text-white">
-                  {stat.value}
-                </div>
-                <div className="text-gray-300 text-sm">{stat.label}</div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <CardContent className="p-8 text-center relative">
+                    <motion.div
+                      whileHover={{ rotate: 360, scale: 1.3 }}
+                      transition={{ duration: 0.8 }}
+                      className={`h-16 w-16 mx-auto mb-6 p-4 rounded-full bg-gradient-to-r ${feature.gradient} shadow-lg`}
+                    >
+                      <feature.icon className="h-8 w-8 text-white" />
+                    </motion.div>
+                    <h3
+                      className={`text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${feature.gradient} mb-4`}
+                    >
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-200 text-sm leading-relaxed">
+                      {feature.description}
+                    </p>
+
+                    {/* Decorative elements */}
+                    <div className="absolute top-3 right-3 w-3 h-3 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full opacity-60"></div>
+                    <div className="absolute bottom-3 left-3 w-3 h-3 bg-gradient-to-r from-pink-400 to-yellow-400 rounded-full opacity-60"></div>
+                  </CardContent>
+                </Card>
               </motion.div>
             ))}
           </motion.div>
-        </motion.div>
 
-        {/* Enhanced Features Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 60 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 1.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20"
-        >
-          {[
-            {
-              icon: Mic,
-              title: "Speech Analysis",
-              description: "Advanced voice pattern recognition with AI",
-              gradient: "from-blue-500 to-cyan-500",
-              bgGradient: "from-blue-900/30 to-cyan-900/30",
-              borderColor: "border-blue-500/30",
-            },
-            {
-              icon: Eye,
-              title: "Gesture Detection",
-              description: "Computer vision body language analysis",
-              gradient: "from-purple-500 to-pink-500",
-              bgGradient: "from-purple-900/30 to-pink-900/30",
-              borderColor: "border-purple-500/30",
-            },
-            {
-              icon: Waves,
-              title: "Voice Modulation",
-              description: "Tone, pace, and clarity assessment",
-              gradient: "from-green-500 to-emerald-500",
-              bgGradient: "from-green-900/30 to-emerald-900/30",
-              borderColor: "border-green-500/30",
-            },
-            {
-              icon: Target,
-              title: "AI Feedback",
-              description: "Personalized improvement suggestions",
-              gradient: "from-orange-500 to-red-500",
-              bgGradient: "from-orange-900/30 to-red-900/30",
-              borderColor: "border-orange-500/30",
-            },
-          ].map((feature, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 1.4 + index * 0.1, duration: 0.8 }}
-              whileHover={{
-                scale: 1.08,
-                y: -15,
-                transition: { type: "spring", stiffness: 300 },
-              }}
-            >
-              <Card
-                className={`bg-gradient-to-br ${feature.bgGradient} border ${feature.borderColor} backdrop-blur-xl hover:shadow-2xl transition-all duration-500 h-full relative overflow-hidden group`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <CardContent className="p-8 text-center relative">
-                  <motion.div
-                    whileHover={{ rotate: 360, scale: 1.3 }}
-                    transition={{ duration: 0.8 }}
-                    className={`h-16 w-16 mx-auto mb-6 p-4 rounded-full bg-gradient-to-r ${feature.gradient} shadow-lg`}
-                  >
-                    <feature.icon className="h-8 w-8 text-white" />
-                  </motion.div>
-                  <h3
-                    className={`text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${feature.gradient} mb-4`}
-                  >
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-200 text-sm leading-relaxed">
-                    {feature.description}
-                  </p>
-
-                  {/* Decorative elements */}
-                  <div className="absolute top-3 right-3 w-3 h-3 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full opacity-60"></div>
-                  <div className="absolute bottom-3 left-3 w-3 h-3 bg-gradient-to-r from-pink-400 to-yellow-400 rounded-full opacity-60"></div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Error Alert with enhanced styling */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: -30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: -30 }}
-              transition={{ duration: 0.4 }}
-              className="mb-8"
-            >
-              <Alert className="bg-gradient-to-r from-red-900/60 to-pink-900/60 border border-red-500/50 backdrop-blur-xl shadow-lg">
-                <motion.div
-                  animate={{ rotate: [0, 15, -15, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity }}
-                  className="text-red-400"
-                >
-                  <AlertCircle className="h-6 w-6" />
-                </motion.div>
-                <AlertDescription className="text-red-100 ml-3 text-lg font-medium">
-                  {error}
-                </AlertDescription>
-              </Alert>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Enhanced Tabs Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.6, duration: 0.8 }}
-          className="mb-16"
-        >
-          <Tabs defaultValue="upload" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-12 bg-gray-800/60 border-gray-600/50 backdrop-blur-xl h-16">
-              <TabsTrigger
-                value="upload"
-                className="flex items-center space-x-3 text-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white transition-all duration-300"
-              >
-                <Upload className="h-5 w-5" />
-                <span>Upload Video</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="live"
-                className="flex items-center space-x-3 text-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white transition-all duration-300"
-              >
-                <Camera className="h-5 w-5" />
-                <span>Live Analysis</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="upload" className="space-y-8">
+          {/* Error Alert with enhanced styling */}
+          <AnimatePresence>
+            {error && (
               <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
+                initial={{ opacity: 0, scale: 0.9, y: -30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -30 }}
+                transition={{ duration: 0.4 }}
+                className="mb-8"
               >
-                <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-600/50 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-cyan-500/5"></div>
-                  <CardHeader className="relative">
-                    <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center">
+                <Alert className="bg-gradient-to-r from-red-900/60 to-pink-900/60 border border-red-500/50 backdrop-blur-xl shadow-lg">
+                  <motion.div
+                    animate={{ rotate: [0, 15, -15, 0] }}
+                    transition={{ duration: 0.6, repeat: Infinity }}
+                    className="text-red-400"
+                  >
+                    <AlertCircle className="h-6 w-6" />
+                  </motion.div>
+                  <AlertDescription className="text-red-100 ml-3 text-lg font-medium">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Enhanced Tabs Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.6, duration: 0.8 }}
+            className="mb-16"
+          >
+            <Tabs defaultValue="upload" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-12 bg-gray-800/60 border-gray-600/50 backdrop-blur-xl h-16">
+                <TabsTrigger
+                  value="upload"
+                  className="flex items-center space-x-3 text-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white transition-all duration-300"
+                >
+                  <Upload className="h-5 w-5" />
+                  <span>Upload Video</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="live"
+                  className="flex items-center space-x-3 text-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white transition-all duration-300"
+                >
+                  <Camera className="h-5 w-5" />
+                  <span>Live Analysis</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="upload" className="space-y-8">
+                <motion.div
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-600/50 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-cyan-500/5"></div>
+                    <CardHeader className="relative">
+                      <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center">
+                        <motion.div
+                          animate={{ scale: [1, 1.1, 1] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="mr-4 p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl"
+                        >
+                          <Upload className="h-8 w-8 text-white" />
+                        </motion.div>
+                        Upload Your Video
+                      </CardTitle>
+                      <CardDescription className="text-gray-300 text-xl">
+                        Upload a video file to get comprehensive speech and
+                        gesture analysis powered by AI
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="relative">
                       <motion.div
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="mr-4 p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.3 }}
+                        className="border-3 border-dashed border-gradient-to-r from-blue-400 to-cyan-400 rounded-2xl p-16 text-center hover:border-cyan-300 transition-all duration-500 bg-gradient-to-br from-blue-900/10 to-cyan-900/10"
                       >
-                        <Upload className="h-8 w-8 text-white" />
+                        <motion.div
+                          animate={{ y: [0, -10, 0] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="mb-8"
+                        >
+                          <Upload className="h-24 w-24 text-cyan-400 mx-auto mb-6" />
+                        </motion.div>
+                        <h3 className="text-2xl font-bold text-white mb-4">
+                          Drop your video here or click to browse
+                        </h3>
+                        <p className="text-gray-300 mb-8 text-lg">
+                          Supports MP4, MOV, AVI files up to 100MB
+                        </p>
+                        <div className="flex justify-center space-x-4 text-sm text-gray-400 mb-8">
+                          <div className="flex items-center space-x-2">
+                            <Activity className="h-4 w-4" />
+                            <span>Speech Analysis</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Eye className="h-4 w-4" />
+                            <span>Gesture Detection</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Brain className="h-4 w-4" />
+                            <span>AI Feedback</span>
+                          </div>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept="video/*"
+                            onChange={handleFileUpload}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            id="video-upload"
+                            disabled={isAnalyzing}
+                          />
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Button
+                              size="lg"
+                              disabled={isAnalyzing}
+                              className="h-16 px-12 text-xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-purple-600 hover:from-blue-700 hover:via-cyan-700 hover:to-purple-700 pointer-events-none shadow-lg"
+                            >
+                              {isAnalyzing ? (
+                                <div className="flex items-center">
+                                  <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{
+                                      duration: 1,
+                                      repeat: Infinity,
+                                      ease: "linear",
+                                    }}
+                                    className="w-6 h-6 border-2 border-white border-t-transparent rounded-full mr-3"
+                                  />
+                                  Analyzing...
+                                </div>
+                              ) : (
+                                <div className="flex items-center">
+                                  <Sparkles className="h-6 w-6 mr-3" />
+                                  Choose File
+                                </div>
+                              )}
+                            </Button>
+                          </motion.div>
+                        </div>
                       </motion.div>
-                      Upload Your Video
-                    </CardTitle>
-                    <CardDescription className="text-gray-300 text-xl">
-                      Upload a video file to get comprehensive speech and
-                      gesture analysis powered by AI
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="relative">
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ duration: 0.3 }}
-                      className="border-3 border-dashed border-gradient-to-r from-blue-400 to-cyan-400 rounded-2xl p-16 text-center hover:border-cyan-300 transition-all duration-500 bg-gradient-to-br from-blue-900/10 to-cyan-900/10"
-                    >
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="live" className="space-y-8">
+                <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-600/50 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5"></div>
+                    <CardHeader className="relative">
+                      <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center">
+                        <motion.div
+                          animate={{ scale: [1, 1.1, 1] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="mr-4 p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl"
+                        >
+                          <Camera className="h-8 w-8 text-white" />
+                        </motion.div>
+                        Live Speech Analysis
+                      </CardTitle>
+                      <CardDescription className="text-gray-300 text-xl">
+                        Start recording to get real-time feedback on your speech
+                        patterns and body language
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="relative">
                       <motion.div
-                        animate={{ y: [0, -10, 0] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="mb-8"
+                        whileHover={{ scale: 1.01 }}
+                        className="bg-gradient-to-br from-gray-900/80 to-black/80 rounded-2xl aspect-video flex items-center justify-center mb-8 border-2 border-gray-600/50 relative overflow-hidden"
                       >
-                        <Upload className="h-24 w-24 text-cyan-400 mx-auto mb-6" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-pink-600/10"></div>
+                        <div className="text-center text-white relative z-10">
+                          <motion.div
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                            className="mb-6"
+                          >
+                            <Video className="h-20 w-20 mx-auto opacity-60 text-purple-400" />
+                          </motion.div>
+                          <h3 className="text-2xl font-semibold mb-2">
+                            Camera Preview
+                          </h3>
+                          <p className="text-gray-300 mb-4">
+                            Recording duration: 10 seconds
+                          </p>
+                          <div className="flex justify-center space-x-6 text-sm text-gray-400">
+                            <div className="flex items-center space-x-2">
+                              <Radio className="h-4 w-4 text-green-400" />
+                              <span>Live Audio</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Eye className="h-4 w-4 text-blue-400" />
+                              <span>Video Feed</span>
+                            </div>
+                          </div>
+                        </div>
                       </motion.div>
-                      <h3 className="text-2xl font-bold text-white mb-4">
-                        Drop your video here or click to browse
-                      </h3>
-                      <p className="text-gray-300 mb-8 text-lg">
-                        Supports MP4, MOV, AVI files up to 100MB
-                      </p>
-                      <div className="flex justify-center space-x-4 text-sm text-gray-400 mb-8">
-                        <div className="flex items-center space-x-2">
-                          <Activity className="h-4 w-4" />
-                          <span>Speech Analysis</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Eye className="h-4 w-4" />
-                          <span>Gesture Detection</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Brain className="h-4 w-4" />
-                          <span>AI Feedback</span>
-                        </div>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept="video/*"
-                          onChange={handleFileUpload}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          id="video-upload"
-                          disabled={isAnalyzing}
-                        />
+                      <div className="flex justify-center">
                         <motion.div
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
                           <Button
                             size="lg"
-                            disabled={isAnalyzing}
-                            className="h-16 px-12 text-xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-purple-600 hover:from-blue-700 hover:via-cyan-700 hover:to-purple-700 pointer-events-none shadow-lg"
+                            onClick={handleWebcamRecording}
+                            disabled={isRecording}
+                            className="h-16 px-12 text-xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 shadow-lg relative overflow-hidden"
                           >
-                            {isAnalyzing ? (
-                              <div className="flex items-center">
-                                <motion.div
-                                  animate={{ rotate: 360 }}
-                                  transition={{
-                                    duration: 1,
-                                    repeat: Infinity,
-                                    ease: "linear",
-                                  }}
-                                  className="w-6 h-6 border-2 border-white border-t-transparent rounded-full mr-3"
-                                />
-                                Analyzing...
-                              </div>
-                            ) : (
-                              <div className="flex items-center">
-                                <Sparkles className="h-6 w-6 mr-3" />
-                                Choose File
-                              </div>
-                            )}
+                            <motion.div
+                              className="absolute inset-0 bg-white/20"
+                              initial={{ x: "-100%" }}
+                              whileHover={{ x: "100%" }}
+                              transition={{ duration: 0.6 }}
+                            />
+                            <span className="relative z-10 flex items-center">
+                              {isRecording ? (
+                                <>
+                                  <motion.div
+                                    animate={{ scale: [1, 1.2, 1] }}
+                                    transition={{
+                                      duration: 1,
+                                      repeat: Infinity,
+                                    }}
+                                    className="w-6 h-6 bg-red-500 rounded-full mr-3"
+                                  />
+                                  Recording...
+                                </>
+                              ) : (
+                                <>
+                                  <Mic className="h-6 w-6 mr-3" />
+                                  Start Recording
+                                </>
+                              )}
+                            </span>
                           </Button>
                         </motion.div>
                       </div>
-                    </motion.div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </TabsContent>
+            </Tabs>
+          </motion.div>
+
+          {/* Enhanced Processing Indicator */}
+          <AnimatePresence>
+            {isAnalyzing && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 40 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: -40 }}
+                transition={{ duration: 0.6 }}
+                className="mb-16"
+              >
+                <Card className="bg-gradient-to-br from-indigo-900/60 to-purple-900/60 border border-indigo-500/50 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 animate-pulse"></div>
+                  <CardContent className="p-16 text-center relative">
+                    {/* Multi-ring spinner */}
+                    <div className="relative mx-auto mb-10 w-28 h-28">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-400 border-r-cyan-400"
+                      />
+                      <motion.div
+                        animate={{ rotate: -360 }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        className="absolute inset-3 rounded-full border-4 border-transparent border-t-purple-400 border-l-pink-400"
+                      />
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 2.5,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        className="absolute inset-6 rounded-full border-4 border-transparent border-t-green-400 border-b-yellow-400"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Brain className="h-8 w-8 text-white" />
+                      </div>
+                    </div>
+
+                    <motion.h3
+                      className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-6"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      AI Analysis in Progress
+                    </motion.h3>
+
+                    <motion.p
+                      className="text-gray-200 mb-4 text-xl"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      Our advanced AI is analyzing speech patterns, gestures,
+                      and communication effectiveness...
+                    </motion.p>
+
+                    <motion.p
+                      className="text-gray-400 mb-10 text-lg"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      This process typically takes 30-60 seconds
+                    </motion.p>
+
+                    {/* Progress indicators */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                      {[
+                        {
+                          icon: Mic,
+                          label: "Speech Analysis",
+                          color: "from-blue-400 to-cyan-400",
+                        },
+                        {
+                          icon: Eye,
+                          label: "Gesture Detection",
+                          color: "from-purple-400 to-pink-400",
+                        },
+                        {
+                          icon: Brain,
+                          label: "AI Processing",
+                          color: "from-green-400 to-emerald-400",
+                        },
+                      ].map((step, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.7 + index * 0.2 }}
+                          className="text-center"
+                        >
+                          <motion.div
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{
+                              duration: 2,
+                              repeat: Infinity,
+                              delay: index * 0.3,
+                            }}
+                            className={`w-12 h-12 mx-auto mb-3 bg-gradient-to-r ${step.color} rounded-full flex items-center justify-center`}
+                          >
+                            <step.icon className="h-6 w-6 text-white" />
+                          </motion.div>
+                          <p className="text-gray-300 text-sm">{step.label}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    {/* Enhanced Progress Bar */}
+                    <div className="w-full max-w-lg mx-auto">
+                      <motion.div
+                        className="h-4 bg-gray-700 rounded-full overflow-hidden relative"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1 }}
+                      >
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full"
+                          animate={{
+                            x: ["-100%", "100%"],
+                            opacity: [0.8, 1, 0.8],
+                          }}
+                          transition={{
+                            x: {
+                              duration: 2.5,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            },
+                            opacity: {
+                              duration: 1.5,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            },
+                          }}
+                          style={{ width: "60%" }}
+                        />
+                      </motion.div>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
-            </TabsContent>
+            )}
+          </AnimatePresence>
 
-            <TabsContent value="live" className="space-y-8">
+          {/* Enhanced Analysis Results */}
+          <AnimatePresence>
+            {analysisResults && (
               <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
+                initial={{ opacity: 0, y: 60, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -60, scale: 0.95 }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="space-y-12"
               >
-                <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-600/50 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5"></div>
-                  <CardHeader className="relative">
-                    <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center">
-                      <motion.div
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="mr-4 p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl"
-                      >
-                        <Camera className="h-8 w-8 text-white" />
-                      </motion.div>
-                      Live Speech Analysis
-                    </CardTitle>
-                    <CardDescription className="text-gray-300 text-xl">
-                      Start recording to get real-time feedback on your speech
-                      patterns and body language
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="relative">
-                    <motion.div
-                      whileHover={{ scale: 1.01 }}
-                      className="bg-gradient-to-br from-gray-900/80 to-black/80 rounded-2xl aspect-video flex items-center justify-center mb-8 border-2 border-gray-600/50 relative overflow-hidden"
+                {/* Results Header */}
+                <motion.div
+                  className="flex flex-col md:flex-row justify-between items-center bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-xl rounded-2xl p-8 border border-gray-600/50"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div>
+                    <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-2">
+                      Analysis Results
+                    </h2>
+                    <p className="text-gray-300 text-lg">
+                      Comprehensive AI-powered assessment of your presentation
+                    </p>
+                  </div>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="mt-4 md:mt-0"
+                  >
+                    <Button
+                      onClick={downloadReport}
+                      size="lg"
+                      className="h-14 px-8 text-lg font-bold bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 shadow-lg"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-pink-600/10"></div>
-                      <div className="text-center text-white relative z-10">
+                      <Download className="h-6 w-6 mr-3" />
+                      Download Report
+                    </Button>
+                  </motion.div>
+                </motion.div>
+
+                {/* Score Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {[
+                    {
+                      icon: BarChart3,
+                      title: "Speech Analysis",
+                      score: analysisResults.speech_score,
+                      gradient: "from-blue-500 to-cyan-500",
+                      bgGradient: "from-blue-900/40 to-cyan-900/40",
+                      borderColor: "border-blue-500/30",
+                      description: "Voice clarity, pace, and articulation",
+                    },
+                    {
+                      icon: TrendingUp,
+                      title: "Body Language",
+                      score: analysisResults.body_language_score,
+                      gradient: "from-purple-500 to-pink-500",
+                      bgGradient: "from-purple-900/40 to-pink-900/40",
+                      borderColor: "border-purple-500/30",
+                      description: "Posture, gestures, and eye contact",
+                    },
+                    {
+                      icon: Award,
+                      title: "Overall Score",
+                      score: Math.round(analysisResults.total_score / 2),
+                      gradient: "from-green-500 to-emerald-500",
+                      bgGradient: "from-green-900/40 to-emerald-900/40",
+                      borderColor: "border-green-500/30",
+                      description: "Combined performance rating",
+                    },
+                  ].map((card, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: 0.4 + index * 0.1, duration: 0.6 }}
+                      whileHover={{
+                        scale: 1.05,
+                        y: -10,
+                        transition: { type: "spring", stiffness: 300 },
+                      }}
+                    >
+                      <Card
+                        className={`bg-gradient-to-br ${card.bgGradient} border ${card.borderColor} backdrop-blur-xl shadow-2xl h-full relative overflow-hidden group`}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <CardHeader className="relative">
+                          <CardTitle
+                            className={`flex items-center space-x-3 text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${card.gradient}`}
+                          >
+                            <motion.div
+                              whileHover={{ rotate: 360 }}
+                              transition={{ duration: 0.8 }}
+                              className={`p-3 rounded-full bg-gradient-to-r ${card.gradient}`}
+                            >
+                              <card.icon className="h-6 w-6 text-white" />
+                            </motion.div>
+                            {card.title}
+                          </CardTitle>
+                          <CardDescription className="text-gray-300 text-lg">
+                            {card.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="relative">
+                          <div className="space-y-6">
+                            <div className="text-center">
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{
+                                  delay: 0.6 + index * 0.1,
+                                  duration: 0.8,
+                                  type: "spring",
+                                }}
+                                className={`text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r ${card.gradient} mb-2`}
+                              >
+                                {card.score}
+                              </motion.div>
+                              <div className="text-gray-400 text-sm">
+                                out of 100
+                              </div>
+                            </div>
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: "100%" }}
+                              transition={{
+                                delay: 0.8 + index * 0.1,
+                                duration: 1,
+                              }}
+                            >
+                              <Progress
+                                value={card.score}
+                                className="h-4 bg-gray-700/50"
+                              />
+                            </motion.div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Transcript Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8, duration: 0.6 }}
+                >
+                  <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-600/50 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
+                    <CardHeader className="relative">
+                      <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 flex items-center">
                         <motion.div
                           animate={{ scale: [1, 1.1, 1] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          className="mb-6"
+                          className="mr-4"
                         >
-                          <Video className="h-20 w-20 mx-auto opacity-60 text-purple-400" />
+                          <MessageSquare className="h-8 w-8 text-blue-400" />
                         </motion.div>
-                        <h3 className="text-2xl font-semibold mb-2">
-                          Camera Preview
-                        </h3>
-                        <p className="text-gray-300 mb-4">
-                          Recording duration: 10 seconds
+                        Speech Transcript
+                      </CardTitle>
+                      <CardDescription className="text-gray-300 text-xl">
+                        AI-generated transcript of your presentation
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="relative">
+                      <motion.div
+                        className="bg-gradient-to-br from-gray-900/60 to-gray-800/60 p-8 rounded-xl border border-gray-600/50 backdrop-blur-sm"
+                        whileHover={{ scale: 1.01 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <p className="text-gray-200 leading-relaxed text-lg font-medium">
+                          {analysisResults.transcript}
                         </p>
-                        <div className="flex justify-center space-x-6 text-sm text-gray-400">
-                          <div className="flex items-center space-x-2">
-                            <Radio className="h-4 w-4 text-green-400" />
-                            <span>Live Audio</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Eye className="h-4 w-4 text-blue-400" />
-                            <span>Video Feed</span>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                    <div className="flex justify-center">
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Button
-                          size="lg"
-                          onClick={handleWebcamRecording}
-                          disabled={isRecording}
-                          className="h-16 px-12 text-xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 shadow-lg relative overflow-hidden"
-                        >
-                          <motion.div
-                            className="absolute inset-0 bg-white/20"
-                            initial={{ x: "-100%" }}
-                            whileHover={{ x: "100%" }}
-                            transition={{ duration: 0.6 }}
-                          />
-                          <span className="relative z-10 flex items-center">
-                            {isRecording ? (
-                              <>
-                                <motion.div
-                                  animate={{ scale: [1, 1.2, 1] }}
-                                  transition={{ duration: 1, repeat: Infinity }}
-                                  className="w-6 h-6 bg-red-500 rounded-full mr-3"
-                                />
-                                Recording...
-                              </>
-                            ) : (
-                              <>
-                                <Mic className="h-6 w-6 mr-3" />
-                                Start Recording
-                              </>
-                            )}
-                          </span>
-                        </Button>
                       </motion.div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </TabsContent>
-          </Tabs>
-        </motion.div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
-        {/* Enhanced Processing Indicator */}
-        <AnimatePresence>
-          {isAnalyzing && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 40 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: -40 }}
-              transition={{ duration: 0.6 }}
-              className="mb-16"
-            >
-              <Card className="bg-gradient-to-br from-indigo-900/60 to-purple-900/60 border border-indigo-500/50 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 animate-pulse"></div>
-                <CardContent className="p-16 text-center relative">
-                  {/* Multi-ring spinner */}
-                  <div className="relative mx-auto mb-10 w-28 h-28">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                      className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-400 border-r-cyan-400"
-                    />
-                    <motion.div
-                      animate={{ rotate: -360 }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                      className="absolute inset-3 rounded-full border-4 border-transparent border-t-purple-400 border-l-pink-400"
-                    />
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        duration: 2.5,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                      className="absolute inset-6 rounded-full border-4 border-transparent border-t-green-400 border-b-yellow-400"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Brain className="h-8 w-8 text-white" />
-                    </div>
-                  </div>
-
-                  <motion.h3
-                    className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-6"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    AI Analysis in Progress
-                  </motion.h3>
-
-                  <motion.p
-                    className="text-gray-200 mb-4 text-xl"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    Our advanced AI is analyzing speech patterns, gestures, and
-                    communication effectiveness...
-                  </motion.p>
-
-                  <motion.p
-                    className="text-gray-400 mb-10 text-lg"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    This process typically takes 30-60 seconds
-                  </motion.p>
-
-                  {/* Progress indicators */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    {[
-                      {
-                        icon: Mic,
-                        label: "Speech Analysis",
-                        color: "from-blue-400 to-cyan-400",
-                      },
-                      {
-                        icon: Eye,
-                        label: "Gesture Detection",
-                        color: "from-purple-400 to-pink-400",
-                      },
-                      {
-                        icon: Brain,
-                        label: "AI Processing",
-                        color: "from-green-400 to-emerald-400",
-                      },
-                    ].map((step, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.7 + index * 0.2 }}
-                        className="text-center"
-                      >
+                {/* AI Feedback Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1, duration: 0.6 }}
+                >
+                  <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5"></div>
+                    <CardHeader className="relative">
+                      <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center">
                         <motion.div
                           animate={{ scale: [1, 1.1, 1] }}
-                          transition={{
-                            duration: 2,
-                            repeat: Infinity,
-                            delay: index * 0.3,
-                          }}
-                          className={`w-12 h-12 mx-auto mb-3 bg-gradient-to-r ${step.color} rounded-full flex items-center justify-center`}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="mr-4"
                         >
-                          <step.icon className="h-6 w-6 text-white" />
+                          <Brain className="h-8 w-8 text-indigo-400" />
                         </motion.div>
-                        <p className="text-gray-300 text-sm">{step.label}</p>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {/* Enhanced Progress Bar */}
-                  <div className="w-full max-w-lg mx-auto">
-                    <motion.div
-                      className="h-4 bg-gray-700 rounded-full overflow-hidden relative"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 1 }}
-                    >
+                        AI Feedback & Recommendations
+                      </CardTitle>
+                      <CardDescription className="text-gray-300 text-xl">
+                        Personalized insights powered by advanced AI to enhance
+                        your presentation skills
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="relative">
                       <motion.div
-                        className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full"
-                        animate={{
-                          x: ["-100%", "100%"],
-                          opacity: [0.8, 1, 0.8],
-                        }}
-                        transition={{
-                          x: {
-                            duration: 2.5,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          },
-                          opacity: {
-                            duration: 1.5,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          },
-                        }}
-                        style={{ width: "60%" }}
-                      />
-                    </motion.div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                        className="bg-gradient-to-br from-indigo-950/60 to-purple-950/60 p-8 rounded-xl border border-indigo-600/50 backdrop-blur-sm"
+                        whileHover={{ scale: 1.01 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <p className="text-gray-200 leading-relaxed text-lg font-medium">
+                          {analysisResults.feedback}
+                        </p>
+                      </motion.div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
-        {/* Enhanced Analysis Results */}
-        <AnimatePresence>
-          {analysisResults && (
-            <motion.div
-              initial={{ opacity: 0, y: 60, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -60, scale: 0.95 }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="space-y-12"
-            >
-              {/* Results Header */}
-              <motion.div
-                className="flex flex-col md:flex-row justify-between items-center bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-xl rounded-2xl p-8 border border-gray-600/50"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <div>
-                  <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-2">
-                    Analysis Results
-                  </h2>
-                  <p className="text-gray-300 text-lg">
-                    Comprehensive AI-powered assessment of your presentation
+                {/* Call to Action */}
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.2, duration: 0.6 }}
+                  className="text-center bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-xl rounded-2xl p-12 border border-gray-600/50"
+                >
+                  <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400 mb-4">
+                    Ready to Improve Further?
+                  </h3>
+                  <p className="text-gray-300 text-xl mb-8">
+                    Practice with more videos to track your progress and master
+                    your presentation skills
                   </p>
-                </div>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="mt-4 md:mt-0"
-                >
-                  <Button
-                    onClick={downloadReport}
-                    size="lg"
-                    className="h-14 px-8 text-lg font-bold bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 shadow-lg"
-                  >
-                    <Download className="h-6 w-6 mr-3" />
-                    Download Report
-                  </Button>
-                </motion.div>
-              </motion.div>
-
-              {/* Score Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {[
-                  {
-                    icon: BarChart3,
-                    title: "Speech Analysis",
-                    score: analysisResults.speech_score,
-                    gradient: "from-blue-500 to-cyan-500",
-                    bgGradient: "from-blue-900/40 to-cyan-900/40",
-                    borderColor: "border-blue-500/30",
-                    description: "Voice clarity, pace, and articulation",
-                  },
-                  {
-                    icon: TrendingUp,
-                    title: "Body Language",
-                    score: analysisResults.body_language_score,
-                    gradient: "from-purple-500 to-pink-500",
-                    bgGradient: "from-purple-900/40 to-pink-900/40",
-                    borderColor: "border-purple-500/30",
-                    description: "Posture, gestures, and eye contact",
-                  },
-                  {
-                    icon: Award,
-                    title: "Overall Score",
-                    score: Math.round(analysisResults.total_score / 2),
-                    gradient: "from-green-500 to-emerald-500",
-                    bgGradient: "from-green-900/40 to-emerald-900/40",
-                    borderColor: "border-green-500/30",
-                    description: "Combined performance rating",
-                  },
-                ].map((card, index) => (
                   <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ delay: 0.4 + index * 0.1, duration: 0.6 }}
-                    whileHover={{
-                      scale: 1.05,
-                      y: -10,
-                      transition: { type: "spring", stiffness: 300 },
-                    }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    <Card
-                      className={`bg-gradient-to-br ${card.bgGradient} border ${card.borderColor} backdrop-blur-xl shadow-2xl h-full relative overflow-hidden group`}
+                    <Button
+                      size="lg"
+                      className="h-16 px-12 text-xl font-bold bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 hover:from-green-600 hover:via-blue-600 hover:to-purple-600 shadow-lg"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                      <CardHeader className="relative">
-                        <CardTitle
-                          className={`flex items-center space-x-3 text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${card.gradient}`}
-                        >
-                          <motion.div
-                            whileHover={{ rotate: 360 }}
-                            transition={{ duration: 0.8 }}
-                            className={`p-3 rounded-full bg-gradient-to-r ${card.gradient}`}
-                          >
-                            <card.icon className="h-6 w-6 text-white" />
-                          </motion.div>
-                          {card.title}
-                        </CardTitle>
-                        <CardDescription className="text-gray-300 text-lg">
-                          {card.description}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="relative">
-                        <div className="space-y-6">
-                          <div className="text-center">
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{
-                                delay: 0.6 + index * 0.1,
-                                duration: 0.8,
-                                type: "spring",
-                              }}
-                              className={`text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r ${card.gradient} mb-2`}
-                            >
-                              {card.score}
-                            </motion.div>
-                            <div className="text-gray-400 text-sm">
-                              out of 100
-                            </div>
-                          </div>
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: "100%" }}
-                            transition={{
-                              delay: 0.8 + index * 0.1,
-                              duration: 1,
-                            }}
-                          >
-                            <Progress
-                              value={card.score}
-                              className="h-4 bg-gray-700/50"
-                            />
-                          </motion.div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                      <ArrowRight className="h-6 w-6 mr-3" />
+                      Analyze Another Video
+                    </Button>
                   </motion.div>
-                ))}
-              </div>
-
-              {/* Transcript Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8, duration: 0.6 }}
-              >
-                <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-600/50 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
-                  <CardHeader className="relative">
-                    <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 flex items-center">
-                      <motion.div
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="mr-4"
-                      >
-                        <MessageSquare className="h-8 w-8 text-blue-400" />
-                      </motion.div>
-                      Speech Transcript
-                    </CardTitle>
-                    <CardDescription className="text-gray-300 text-xl">
-                      AI-generated transcript of your presentation
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="relative">
-                    <motion.div
-                      className="bg-gradient-to-br from-gray-900/60 to-gray-800/60 p-8 rounded-xl border border-gray-600/50 backdrop-blur-sm"
-                      whileHover={{ scale: 1.01 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <p className="text-gray-200 leading-relaxed text-lg font-medium">
-                        {analysisResults.transcript}
-                      </p>
-                    </motion.div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* AI Feedback Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1, duration: 0.6 }}
-              >
-                <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5"></div>
-                  <CardHeader className="relative">
-                    <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center">
-                      <motion.div
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="mr-4"
-                      >
-                        <Brain className="h-8 w-8 text-indigo-400" />
-                      </motion.div>
-                      AI Feedback & Recommendations
-                    </CardTitle>
-                    <CardDescription className="text-gray-300 text-xl">
-                      Personalized insights powered by advanced AI to enhance
-                      your presentation skills
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="relative">
-                    <motion.div
-                      className="bg-gradient-to-br from-indigo-950/60 to-purple-950/60 p-8 rounded-xl border border-indigo-600/50 backdrop-blur-sm"
-                      whileHover={{ scale: 1.01 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <p className="text-gray-200 leading-relaxed text-lg font-medium">
-                        {analysisResults.feedback}
-                      </p>
-                    </motion.div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Call to Action */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.2, duration: 0.6 }}
-                className="text-center bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-xl rounded-2xl p-12 border border-gray-600/50"
-              >
-                <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400 mb-4">
-                  Ready to Improve Further?
-                </h3>
-                <p className="text-gray-300 text-xl mb-8">
-                  Practice with more videos to track your progress and master
-                  your presentation skills
-                </p>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button
-                    size="lg"
-                    className="h-16 px-12 text-xl font-bold bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 hover:from-green-600 hover:via-blue-600 hover:to-purple-600 shadow-lg"
-                  >
-                    <ArrowRight className="h-6 w-6 mr-3" />
-                    Analyze Another Video
-                  </Button>
                 </motion.div>
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }
