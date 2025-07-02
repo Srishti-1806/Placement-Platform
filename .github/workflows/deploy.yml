@@ -43,13 +43,14 @@ jobs:
         docker push $DOCKER_USERNAME/placementpro:latest
     
     - name: Deploy to EC2
-      uses: appleboy/ssh-action@v0.1.5
+      uses: appleboy/ssh-action@v0.1.7
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         port: 22
-        timeout: 300
+        timeout: 300s
+        command_timeout: 10m
         script: |
           # Install Docker if not present (Amazon Linux commands)
           if ! command -v docker &> /dev/null; then
