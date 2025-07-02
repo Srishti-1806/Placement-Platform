@@ -42,110 +42,83 @@ jobs:
         docker build -t $DOCKER_USERNAME/placementpro:latest .
         docker push $DOCKER_USERNAME/placementpro:latest
     
-    - name: Deploy to EC2 (Debug SSH Method)
-      run: |
-        # Create SSH key file
-        echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
-        chmod 600 private_key.pem
-        
-        # Debug: Show key fingerprint
-        echo "Key fingerprint from secret:"
-        ssh-keygen -l -f private_key.pem
-        
-        # Debug: Show key format
-        echo "Key format check:"
-        head -1 private_key.pem
-        tail -1 private_key.pem
-        
-        # Debug: Test SSH connection with verbose output
-        echo "Testing SSH connection..."
-        ssh -i private_key.pem \
-            -o ConnectTimeout=30 \
-            -o StrictHostKeyChecking=no \
-            -o UserKnownHostsFile=/dev/null \
-            -v \
-            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} \
-            'echo "SSH connection successful"' || echo "SSH failed, continuing with deployment attempt..."
-        
-        # Try deployment anyway
-        ssh -i private_key.pem \
-            -o ConnectTimeout=30 \
-            -o StrictHostKeyChecking=no \
-            -o UserKnownHostsFile=/dev/null \
-            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
-        
-        # Deployment script
-        echo "🚀 Starting PlacementPro deployment..."
-        
-        # Install Docker if not present
-        if ! command -v docker &> /dev/null; then
-          echo "📦 Installing Docker..."
-          sudo yum update -y
-          sudo yum install -y docker
-          sudo systemctl start docker
-          sudo systemctl enable docker
-          sudo usermod -aG docker ec2-user
-        fi
-        
-        # Ensure Docker is running
-        sudo systemctl start docker
-        
-        # Create app directory
-        mkdir -p /home/ec2-user/placementpro
-        cd /home/ec2-user/placementpro
-        
-        # Stop existing container
-        echo "🛑 Stopping existing container..."
-        sudo docker stop placementpro 2>/dev/null || true
-        sudo docker rm placementpro 2>/dev/null || true
-        
-        # Pull and run latest image
-        echo "📥 Pulling latest Docker image..."
-        sudo docker pull ${{ secrets.DOCKER_USERNAME }}/placementpro:latest
-        
-        # Create directories
-        mkdir -p temp static/reports static/summaries static/transcripts
-        
-        # Run new container
-        echo "🚀 Starting new container..."
-        sudo docker run -d \
-          --name placementpro \
-          -p 8000:8000 \
-          -p 80:8000 \
-          -v $(pwd)/temp:/app/temp \
-          -v $(pwd)/static:/app/static \
-          --restart unless-stopped \
-          ${{ secrets.DOCKER_USERNAME }}/placementpro:latest
-        
-        # Wait and verify
-        sleep 45
-        
-        # Check if container is running
-        if sudo docker ps | grep placementpro; then
-          echo "✅ Container is running successfully"
-        else
-          echo "❌ Container failed to start"
-          sudo docker logs placementpro
-          exit 1
-        fi
-        
-        # Health check
-        for i in {1..5}; do
-          if curl -f http://localhost:8000/api/health; then
-            echo "✅ Health check passed!"
-            break
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        port: 22
+        timeout: 300s
+        command_timeout: 10m
+        script: |
+          # Ensure Docker is running
+          sudo systemctl start docker || true
+          
+          # Navigate to app directory
+          cd /home/ec2-user/placementpro || mkdir -p /home/ec2-user/placementpro && cd /home/ec2-user/placementpro
+          
+          # Stop existing container
+          echo "🛑 Stopping existing container..."
+          sudo docker stop placementpro 2>/dev/null || true
+          sudo docker rm placementpro 2>/dev/null || true
+          
+          # Pull latest image
+          echo "📥 Pulling latest Docker image..."
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/placementpro:latest
+          
+          # Create necessary directories
+          mkdir -p temp static/reports static/summaries static/transcripts
+          
+          # Run new container
+          echo "🚀 Starting new container..."
+          sudo docker run -d \
+            --name placementpro \
+            -p 8000:8000 \
+            -p 80:8000 \
+            -v $(pwd)/temp:/app/temp \
+            -v $(pwd)/static:/app/static \
+            --restart unless-stopped \
+            ${{ secrets.DOCKER_USERNAME }}/placementpro:latest
+          
+          # Wait for container to start
+          echo "⏳ Waiting for container to start..."
+          sleep 45
+          
+          # Verify container is running
+          if sudo docker ps | grep placementpro; then
+            echo "✅ Container is running successfully"
+            sudo docker ps --filter name=placementpro
           else
-            echo "⏳ Health check attempt $i/5..."
-            sleep 10
+            echo "❌ Container failed to start"
+            sudo docker logs placementpro 2>/dev/null || echo "No logs available"
+            exit 1
           fi
-        done
-        
-        # Cleanup
-        sudo docker image prune -f
-        echo "🎉 Deployment completed successfully!"
-        
-        ENDSSH
-        
-        # Clean up
-        rm -f private_key.pem
-        echo "🌐 Live at: http://${{ secrets.EC2_HOST }}"
+          
+          # Health check with retries
+          echo "🏥 Running health checks..."
+          for i in {1..6}; do
+            if curl -f -s http://localhost:8000/api/health; then
+              echo "✅ Health check passed!"
+              break
+            else
+              echo "⏳ Health check attempt $i/6 failed, retrying in 10s..."
+              sleep 10
+            fi
+            
+            if [ $i -eq 6 ]; then
+              echo "❌ Health check failed after 6 attempts"
+              sudo docker logs placementpro
+              exit 1
+            fi
+          done
+          
+          # Show final status
+          echo "📊 Final deployment status:"
+          sudo docker ps --filter name=placementpro --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          
+          # Cleanup old images
+          sudo docker image prune -f --filter="dangling=true"
+          
+          echo "🎉 Deployment completed successfully!"
+          echo "🌐 PlacementPro is live at: http://${{ secrets.EC2_HOST }}"
