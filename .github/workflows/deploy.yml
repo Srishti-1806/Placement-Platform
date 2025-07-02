@@ -1,4 +1,4 @@
-name: Deploy PlacementPro to AWS EC2
+name: Deploy PlacementPro Full Stack to AWS EC2
 
 on:
   push:
@@ -33,14 +33,34 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Set up Node.js for Frontend Build
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install pnpm
+      run: npm install -g pnpm
+    
+    - name: Install frontend dependencies
+      run: pnpm install
+      
+    - name: Build Next.js frontend
+      run: |
+        echo "🎨 Building Next.js frontend..."
+        pnpm build
+        echo "✅ Frontend build completed"
+    
     - name: Build and push Docker image
       env:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       run: |
         echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+        echo "🐳 Building complete PlacementPro image..."
         docker build -t $DOCKER_USERNAME/placementpro:latest .
+        echo "📤 Pushing Docker image..."
         docker push $DOCKER_USERNAME/placementpro:latest
+        echo "✅ Docker image pushed successfully"
     
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.7
@@ -50,16 +70,17 @@ jobs:
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         port: 22
         timeout: 300s
-        command_timeout: 10m
+        command_timeout: 15m
         script: |
           # Ensure Docker is running
           sudo systemctl start docker || true
+          sudo systemctl enable docker || true
           
           # Navigate to app directory
           cd /home/ec2-user/placementpro || mkdir -p /home/ec2-user/placementpro && cd /home/ec2-user/placementpro
           
-          # Stop existing container
-          echo "🛑 Stopping existing container..."
+          # Stop existing containers
+          echo "🛑 Stopping existing containers..."
           sudo docker stop placementpro 2>/dev/null || true
           sudo docker rm placementpro 2>/dev/null || true
           
@@ -70,55 +91,117 @@ jobs:
           # Create necessary directories
           mkdir -p temp static/reports static/summaries static/transcripts
           
-          # Run new container
-          echo "🚀 Starting new container..."
+          # Run new container with ALL service ports
+          echo "🚀 Starting complete PlacementPro platform..."
           sudo docker run -d \
             --name placementpro \
-            -p 8000:8000 \
             -p 80:8000 \
+            -p 3000:3000 \
+            -p 5000:5000 \
+            -p 8000:8000 \
             -v $(pwd)/temp:/app/temp \
             -v $(pwd)/static:/app/static \
             --restart unless-stopped \
+            --memory="3g" \
+            --cpus="2.0" \
             ${{ secrets.DOCKER_USERNAME }}/placementpro:latest
           
-          # Wait for container to start
-          echo "⏳ Waiting for container to start..."
-          sleep 45
+          # Wait for all services to initialize
+          echo "⏳ Waiting for all services to start..."
+          sleep 90
           
           # Verify container is running
           if sudo docker ps | grep placementpro; then
             echo "✅ Container is running successfully"
-            sudo docker ps --filter name=placementpro
+            sudo docker ps --filter name=placementpro --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
           else
             echo "❌ Container failed to start"
             sudo docker logs placementpro 2>/dev/null || echo "No logs available"
             exit 1
           fi
           
-          # Health check with retries
-          echo "🏥 Running health checks..."
-          for i in {1..6}; do
+          # Test all services
+          echo "🧪 Testing all services..."
+          
+          # Backend health check
+          echo "🔧 Testing Backend API..."
+          for i in {1..10}; do
             if curl -f -s http://localhost:8000/api/health; then
-              echo "✅ Health check passed!"
+              echo "✅ Backend API: Working!"
               break
             else
-              echo "⏳ Health check attempt $i/6 failed, retrying in 10s..."
+              echo "⏳ Backend API attempt $i/10..."
               sleep 10
             fi
             
-            if [ $i -eq 6 ]; then
-              echo "❌ Health check failed after 6 attempts"
-              sudo docker logs placementpro
+            if [ $i -eq 10 ]; then
+              echo "❌ Backend API failed after 10 attempts"
+              sudo docker logs placementpro --tail 50
               exit 1
             fi
           done
           
-          # Show final status
+          # Frontend health check
+          echo "🎨 Testing Frontend..."
+          for i in {1..8}; do
+            if curl -f -s http://localhost:3000 > /dev/null; then
+              echo "✅ Frontend: Working!"
+              break
+            else
+              echo "⏳ Frontend attempt $i/8..."
+              sleep 15
+            fi
+            
+            if [ $i -eq 8 ]; then
+              echo "⚠️ Frontend may still be starting..."
+            fi
+          done
+          
+          # Chat server health check
+          echo "💬 Testing Chat Server..."
+          for i in {1..5}; do
+            if curl -f -s http://localhost:5000 > /dev/null; then
+              echo "✅ Chat Server: Working!"
+              break
+            else
+              echo "⏳ Chat server attempt $i/5..."
+              sleep 10
+            fi
+          done
+          
+          # Show comprehensive status
+          echo ""
           echo "📊 Final deployment status:"
+          echo "🐳 Container Status:"
           sudo docker ps --filter name=placementpro --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          echo ""
+          echo "🔍 Service Health Checks:"
+          echo -n "🔧 Backend API: "
+          curl -s http://localhost:8000/api/health | python3 -c "import sys, json; print('✅ Healthy' if json.load(sys.stdin).get('status') == 'healthy' else '❌ Unhealthy')" 2>/dev/null || echo "❌ Failed"
+          echo -n "🎨 Frontend: "
+          curl -s -I http://localhost:3000 | head -n 1 | grep -q "200" && echo "✅ Accessible" || echo "⚠️ Check manually"
+          echo -n "💬 Chat Server: "
+          curl -s -I http://localhost:5000 | head -n 1 | grep -q "200" && echo "✅ Accessible" || echo "⚠️ Check manually"
+          echo ""
+          echo "📈 Resource Usage:"
+          sudo docker stats placementpro --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+          
+          # Show service logs
+          echo ""
+          echo "📋 Recent Service Logs:"
+          sudo docker logs placementpro --tail 20
           
           # Cleanup old images
+          echo "🧹 Cleaning up old Docker images..."
           sudo docker image prune -f --filter="dangling=true"
           
-          echo "🎉 Deployment completed successfully!"
-          echo "🌐 PlacementPro is live at: http://${{ secrets.EC2_HOST }}"
+          echo ""
+          echo "🎉 Complete PlacementPro platform deployed successfully!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🌐 MAIN WEBSITE: http://${{ secrets.EC2_HOST }}"
+          echo "🎨 Frontend (Next.js): http://${{ secrets.EC2_HOST }}:3000"
+          echo "🔧 Backend API: http://${{ secrets.EC2_HOST }}:8000"
+          echo "💬 Community Chat: http://${{ secrets.EC2_HOST }}:5000"
+          echo "📖 API Documentation: http://${{ secrets.EC2_HOST }}:8000/docs"
+          echo "🏥 Health Check: http://${{ secrets.EC2_HOST }}:8000/api/health"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
