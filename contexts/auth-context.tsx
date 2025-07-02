@@ -1,7 +1,8 @@
 "use client"
 
 import type React from "react"
-
+import { auth } from "@/lib/firebase";
+import {GithubAuthProvider, GoogleAuthProvider, signInWithPopup,signOut } from "firebase/auth";
 import { createContext, useContext, useState, useEffect } from "react"
 
 interface User {
@@ -15,9 +16,9 @@ interface User {
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<boolean>
-  signup: (name: string, email: string, password: string) => Promise<boolean>
-  logout: () => void
+  signupGoogle: () => Promise<boolean>
+  logout: () => Promise<boolean>
+  signupGithub: () => Promise<boolean>
   isLoading: boolean
 }
 
@@ -36,19 +37,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const signupGoogle = async (): Promise<boolean> => {
     setIsLoading(true)
-
+    const provider = new GoogleAuthProvider();
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Mock authentication
-    if (email && password.length >= 6) {
+    try{
+      const result = await signInWithPopup(auth, provider);
+    
+      // Mock registration
       const mockUser: User = {
-        id: "1",
-        name: email.split("@")[0],
-        email,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
+        id: result.user.uid,
+        name:result.user.displayName ,
+        email:result.user.email,
+        avatar:result.user.photoURL,
         role: "student",
         joinedAt: new Date(),
       }
@@ -57,45 +58,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("placement-user", JSON.stringify(mockUser))
       setIsLoading(false)
       return true
-    }
-
-    setIsLoading(false)
-    return false
-  }
-
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
-    setIsLoading(true)
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Mock registration
-    if (name && email && password.length >= 6) {
-      const mockUser: User = {
-        id: Date.now().toString(),
-        name,
-        email,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-        role: "student",
-        joinedAt: new Date(),
-      }
-
-      setUser(mockUser)
-      localStorage.setItem("placement-user", JSON.stringify(mockUser))
+    }catch(e){
+      console.log("ERROR IN GOOGLE SINGIN",e.message)
       setIsLoading(false)
-      return true
+      return false
     }
-
-    setIsLoading(false)
-    return false
+    
   }
 
-  const logout = () => {
+  const logout = async(): Promise<boolean> => {
     setUser(null)
     localStorage.removeItem("placement-user")
+    try{
+      await signOut(auth);
+      return true
+    }catch(e){
+      return false
+    }
   }
 
-  return <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>{children}</AuthContext.Provider>
+  const signupGithub = async (): Promise<boolean> => {
+    setIsLoading(true)
+    const provider = new GithubAuthProvider();
+    // Simulate API call
+    try{
+      const result = await signInWithPopup(auth, provider);
+    
+      // Mock registration
+      const mockUser: User = {
+        id: result.user.uid,
+        name:result.user.displayName ,
+        email:result.user.email,
+        avatar:result.user.photoURL,
+        role: "student",
+        joinedAt: new Date(),
+      }
+
+      setUser(mockUser)
+      localStorage.setItem("placement-user", JSON.stringify(mockUser))
+      setIsLoading(false)
+      return true
+    }catch(e){
+      console.log("ERROR IN GITHUB SINGIN",e.message)
+      setIsLoading(false)
+      return false
+    }
+    
+  }
+
+
+  return <AuthContext.Provider value={{ user, signupGoogle, logout,signupGithub,isLoading }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

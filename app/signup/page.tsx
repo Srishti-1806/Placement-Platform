@@ -40,7 +40,7 @@ function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const { signup, isLoading } = useAuth();
+  const { signupGithub,signupGoogle, isLoading } = useAuth();
   const { playSound } = useSound();
   const router = useRouter();
   const searchParams = useSearchParams(); // This needs to be wrapped in Suspense
@@ -49,35 +49,46 @@ function SignupForm() {
     e.preventDefault();
     setError("");
     playSound("click");
+    // const provider = new GoogleAuthProvider();
+    // if (!name || !email || !password || !confirmPassword) {
+    //   setError("Please fill in all fields");
+    //   playSound("error");
+    //   return;
+    // }
 
-    if (!name || !email || !password || !confirmPassword) {
-      setError("Please fill in all fields");
-      playSound("error");
-      return;
-    }
+    // if (password !== confirmPassword) {
+    //   setError("Passwords do not match");
+    //   playSound("error");
+    //   return;
+    // }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      playSound("error");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      playSound("error");
-      return;
-    }
-
-    const success = await signup(name, email, password);
-    if (success) {
+    // if (password.length < 6) {
+    //   setError("Password must be at least 6 characters");
+    //   playSound("error");
+    //   return;
+    // }
+    const success = await signupGoogle();
+    if(success){
       playSound("success");
       const redirectTo = searchParams.get("redirect") || "/dashboard";
       router.push(redirectTo);
-    } else {
+    }else{
       setError("Failed to create account");
       playSound("error");
     }
   };
+
+  const handleSigninGithub = async () =>{
+    const success = await signupGithub();
+    if(success){
+      playSound("success");
+      const redirectTo = searchParams.get("redirect") || "/dashboard";
+      router.push(redirectTo);
+    }else{
+      setError("Failed to create account");
+      playSound("error");
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative">
@@ -280,7 +291,7 @@ function SignupForm() {
                   variant="outline"
                   className="w-full border-gray-600 text-gray-300 hover:bg-gray-800"
                   onMouseEnter={() => playSound("hover")}
-                  onClick={() => playSound("click")}
+                  onClick={handleSigninGithub}
                 >
                   <Github className="mr-2 h-4 w-4" />
                   GitHub
