@@ -33,6 +33,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Project specific
 venv310
 utils/ffmpeg.exe
 utils/ffplay.exe
@@ -42,7 +43,7 @@ __pycache__
 temp
 public/pdfs/summary.pdf
 public/pdfs/transcript.pdf
-<<<<<<< HEAD
+.config/
 
 # Docker
 .dockerignore
@@ -50,7 +51,6 @@ public/pdfs/transcript.pdf
 # AWS
 .aws/
 aws-exports.js
-
 
 # Environment Variables
 .env
@@ -96,6 +96,3 @@ temp/
 dist/
 build/
 .next/
-=======
-.config/
->>>>>>> 6fb4e81c4e52607bfc26511c736e9f017fad58a6
