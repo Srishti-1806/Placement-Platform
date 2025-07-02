@@ -35,3 +35,4 @@ __pycache__
 temp
 public/pdfs/summary.pdf
 public/pdfs/transcript.pdf
+.config/
