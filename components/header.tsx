@@ -7,12 +7,13 @@ import { Menu, X, User, LogOut } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/contexts/auth-context"
 import { useSound } from "@/hooks/use-sound"
-
+import { useRouter, useSearchParams } from "next/navigation"
 export function Header() {
+  const searchParams = useSearchParams();
+  const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { user, logout } = useAuth()
   const { playSound } = useSound()
-
   const handleMenuToggle = () => {
     setIsMenuOpen(!isMenuOpen)
     playSound(isMenuOpen ? "close" : "open")
@@ -20,6 +21,8 @@ export function Header() {
 
   const handleLogout = () => {
     logout()
+    const redirectTo = searchParams.get("redirect") || "/";
+    router.push(redirectTo);
     playSound("success")
   }
 
