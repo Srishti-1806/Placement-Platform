@@ -429,7 +429,7 @@ export default function Home() {
                     >
                       <Sparkles className="h-6 w-6 text-magenta-400" />
                     </motion.div>
-                    <span className="text-magenta-300 font-semibold text-lg">
+                    <span className="text-magenta-300 font-semibold text-base">
                       🚀 Trusted by 50K+ Students - Welcome to the Future
                     </span>
                   </div>
@@ -438,7 +438,7 @@ export default function Home() {
 
               {/* Main Heading */}
               <motion.h1
-                className="text-7xl md:text-9xl font-black text-white mb-10 leading-tight"
+                className="text-4xl md:text-6xl font-bold text-white mb-8 leading-tight"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 1 }}
@@ -479,7 +479,7 @@ export default function Home() {
 
               {/* Subtitle */}
               <motion.p
-                className="text-2xl md:text-4xl text-gray-100 max-w-7xl mx-auto leading-relaxed font-light mb-12"
+                className="text-lg md:text-xl text-gray-100 max-w-6xl mx-auto leading-relaxed font-light mb-8"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 1 }}
@@ -524,7 +524,7 @@ export default function Home() {
                       <stat.icon className="h-6 w-6 text-white" />
                     </motion.div>
                     <div>
-                      <div className="text-2xl font-bold text-white">
+                      <div className="text-lg font-bold text-white">
                         {stat.value}
                       </div>
                       <div className="text-gray-300 text-sm">{stat.label}</div>
@@ -546,7 +546,7 @@ export default function Home() {
                 >
                   <Button
                     size="lg"
-                    className="h-20 px-16 text-2xl font-bold bg-gradient-to-r from-magenta-600 via-pink-600 to-fuchsia-600 hover:from-magenta-700 hover:via-pink-700 hover:to-fuchsia-700 shadow-2xl relative overflow-hidden"
+                    className="h-12 px-8 text-base font-semibold bg-gradient-to-r from-magenta-600 via-pink-600 to-fuchsia-600 hover:from-magenta-700 hover:via-pink-700 hover:to-fuchsia-700 shadow-2xl relative overflow-hidden"
                     asChild
                   >
                     <Link href="/signup">
@@ -572,7 +572,7 @@ export default function Home() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="h-20 px-16 text-2xl font-bold border-2 border-magenta-400 text-magenta-300 hover:bg-magenta-400 hover:text-white backdrop-blur-xl"
+                    className="h-12 px-8 text-base font-semibold border-2 border-magenta-400 text-magenta-300 hover:bg-magenta-400 hover:text-white backdrop-blur-xl"
                     asChild
                   >
                     <Link href="/demo">
@@ -654,7 +654,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2 className="text-3xl md:text-5xl font-bold text-white mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">
                 Trusted by students who joined{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 to-pink-400">
                   Top Companies
@@ -699,13 +699,13 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-center mb-20"
             >
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
                 How It{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 to-pink-400">
                   Works
                 </span>
               </h2>
-              <p className="text-2xl text-gray-300 max-w-4xl mx-auto">
+              <p className="text-lg text-gray-300 max-w-4xl mx-auto">
                 Get started in minutes and transform your career journey with
                 our simple 4-step process
               </p>
@@ -734,7 +734,7 @@ export default function Home() {
                           {step.step}
                         </div>
                       </motion.div>
-                      <h3 className="text-2xl font-bold text-white mb-4">
+                      <h3 className="text-xl font-bold text-white mb-3">
                         {step.title}
                       </h3>
                       <p className="text-gray-300 leading-relaxed">
@@ -765,13 +765,13 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-center mb-20"
             >
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
                 Everything You Need for{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 to-pink-400">
                   Success
                 </span>
               </h2>
-              <p className="text-2xl text-gray-300 max-w-5xl mx-auto">
+              <p className="text-lg text-gray-300 max-w-5xl mx-auto">
                 From AI-powered analysis to community support, we've got all the
                 comprehensive tools and resources to help you land your dream
                 job faster than ever.
@@ -807,12 +807,12 @@ export default function Home() {
                         </motion.div>
 
                         <h3
-                          className={`text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${feature.gradient} mb-4 group-hover:scale-105 transition-transform`}
+                          className={`text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${feature.gradient} mb-3 group-hover:scale-105 transition-transform`}
                         >
                           {feature.title}
                         </h3>
 
-                        <p className="text-gray-200 text-lg leading-relaxed mb-6 flex-grow">
+                        <p className="text-gray-200 text-base leading-relaxed mb-4 flex-grow">
                           {feature.description}
                         </p>
 
@@ -848,13 +848,13 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-center mb-20"
             >
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
                 Trusted by{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 to-pink-400">
                   Thousands
                 </span>
               </h2>
-              <p className="text-2xl text-gray-300 max-w-4xl mx-auto">
+              <p className="text-lg text-gray-300 max-w-4xl mx-auto">
                 Join a community of successful professionals who transformed
                 their careers with PlacementPro
               </p>
@@ -879,11 +879,11 @@ export default function Home() {
                     <stat.icon className="h-12 w-12 text-white" />
                   </motion.div>
                   <div
-                    className={`text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r ${stat.color} mb-4`}
+                    className={`text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${stat.color} mb-3`}
                   >
                     {stat.number}
                   </div>
-                  <div className="text-gray-300 font-semibold text-xl group-hover:text-white transition-colors">
+                  <div className="text-gray-300 font-semibold text-base group-hover:text-white transition-colors">
                     {stat.label}
                   </div>
                 </motion.div>
@@ -902,13 +902,13 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-center mb-20"
             >
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
                 Choose Your{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 to-pink-400">
                   Plan
                 </span>
               </h2>
-              <p className="text-2xl text-gray-300 max-w-4xl mx-auto">
+              <p className="text-lg text-gray-300 max-w-4xl mx-auto">
                 Start free and upgrade as you grow. All plans include access to
                 our core features.
               </p>
@@ -937,19 +937,21 @@ export default function Home() {
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent"></div>
                     <CardContent className="p-10 relative">
                       <h3
-                        className={`text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${plan.gradient} mb-4`}
+                        className={`text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${plan.gradient} mb-3`}
                       >
                         {plan.name}
                       </h3>
-                      <div className="mb-6">
-                        <span className="text-5xl font-black text-white">
+                      <div className="mb-4">
+                        <span className="text-3xl font-bold text-white">
                           {plan.price}
                         </span>
                         {plan.price !== "Free" && (
-                          <span className="text-gray-400">/month</span>
+                          <span className="text-gray-400 text-base">
+                            /month
+                          </span>
                         )}
                       </div>
-                      <p className="text-gray-300 mb-8 text-lg">
+                      <p className="text-gray-300 mb-6 text-base">
                         {plan.description}
                       </p>
 
@@ -997,13 +999,13 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-center mb-20"
             >
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
                 Success{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 to-pink-400">
                   Stories
                 </span>
               </h2>
-              <p className="text-2xl text-gray-300 max-w-5xl mx-auto">
+              <p className="text-lg text-gray-300 max-w-5xl mx-auto">
                 See how PlacementPro has transformed careers and helped students
                 achieve their dreams at top tech companies worldwide.
               </p>
@@ -1070,13 +1072,13 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-center mb-20"
             >
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
                 Frequently Asked{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 to-pink-400">
                   Questions
                 </span>
               </h2>
-              <p className="text-2xl text-gray-300 max-w-4xl mx-auto">
+              <p className="text-lg text-gray-300 max-w-4xl mx-auto">
                 Got questions? We've got answers. Here are the most common
                 questions about PlacementPro.
               </p>
@@ -1178,14 +1180,14 @@ export default function Home() {
               />
 
               <div className="relative z-10">
-                <h2 className="text-6xl md:text-8xl font-bold text-white mb-10">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-8">
                   Ready to Transform{" "}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 to-pink-400">
                     Your Career?
                   </span>
                 </h2>
 
-                <p className="text-2xl md:text-3xl text-gray-200 mb-16 max-w-5xl mx-auto leading-relaxed">
+                <p className="text-lg md:text-xl text-gray-200 mb-12 max-w-5xl mx-auto leading-relaxed">
                   Join thousands of students who have successfully landed their
                   dream jobs with PlacementPro's comprehensive AI-powered
                   platform. Your journey to success starts here.
@@ -1198,7 +1200,7 @@ export default function Home() {
                   >
                     <Button
                       size="lg"
-                      className="h-20 px-16 text-2xl font-bold bg-gradient-to-r from-magenta-600 to-pink-600 hover:from-magenta-700 hover:to-pink-700 shadow-2xl"
+                      className="h-12 px-8 text-base font-semibold bg-gradient-to-r from-magenta-600 to-pink-600 hover:from-magenta-700 hover:to-pink-700 shadow-2xl"
                       asChild
                     >
                       <Link href="/signup">
@@ -1216,7 +1218,7 @@ export default function Home() {
                     <Button
                       size="lg"
                       variant="outline"
-                      className="h-20 px-16 text-2xl font-bold border-2 border-white text-white hover:bg-white hover:text-magenta-600 backdrop-blur-xl"
+                      className="h-12 px-8 text-base font-semibold border-2 border-white text-white hover:bg-white hover:text-magenta-600 backdrop-blur-xl"
                       asChild
                     >
                       <Link href="/contact">
