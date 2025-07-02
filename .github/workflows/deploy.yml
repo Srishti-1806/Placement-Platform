@@ -42,16 +42,32 @@ jobs:
         docker build -t $DOCKER_USERNAME/placementpro:latest .
         docker push $DOCKER_USERNAME/placementpro:latest
     
-    - name: Deploy to EC2 (Simplified SSH Method)
+    - name: Deploy to EC2 (Debug SSH Method)
       run: |
         # Create SSH key file
         echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
         chmod 600 private_key.pem
         
-        # Test SSH key format
+        # Debug: Show key fingerprint
+        echo "Key fingerprint from secret:"
         ssh-keygen -l -f private_key.pem
         
-        # Deploy using SSH (skip known_hosts entirely)
+        # Debug: Show key format
+        echo "Key format check:"
+        head -1 private_key.pem
+        tail -1 private_key.pem
+        
+        # Debug: Test SSH connection with verbose output
+        echo "Testing SSH connection..."
+        ssh -i private_key.pem \
+            -o ConnectTimeout=30 \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -v \
+            ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} \
+            'echo "SSH connection successful"' || echo "SSH failed, continuing with deployment attempt..."
+        
+        # Try deployment anyway
         ssh -i private_key.pem \
             -o ConnectTimeout=30 \
             -o StrictHostKeyChecking=no \
