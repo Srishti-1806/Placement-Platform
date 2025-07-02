@@ -162,13 +162,13 @@ export default function SpeechAnalyzerPage() {
           ))}
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Enhanced Hero Section */}
           <motion.div
             initial={{ opacity: 0, y: 60, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            className="text-center mb-20"
+            className="text-center mb-12"
           >
             <motion.div
               className="flex items-center justify-center mb-10"
@@ -196,7 +196,7 @@ export default function SpeechAnalyzerPage() {
             </motion.div>
 
             <motion.h1
-              className="text-6xl md:text-8xl font-black text-white mb-8 leading-tight"
+              className="text-2xl md:text-3xl font-bold text-white mb-4 leading-tight"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 1 }}
@@ -224,25 +224,25 @@ export default function SpeechAnalyzerPage() {
                 Analyzer
               </motion.span>
               <motion.div
-                className="inline-block ml-4"
+                className="inline-block ml-2"
                 animate={{
                   rotate: [0, 15, -15, 0],
-                  scale: [1, 1.2, 1],
+                  scale: [1, 1.1, 1],
                 }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                <Sparkles className="h-12 w-12 text-yellow-400" />
+                <Sparkles className="h-6 w-6 text-yellow-400" />
               </motion.div>
             </motion.h1>
 
             <motion.p
-              className="text-2xl md:text-3xl text-gray-100 max-w-5xl mx-auto leading-relaxed font-light"
+              className="text-base text-gray-100 max-w-4xl mx-auto leading-relaxed"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 1 }}
             >
               Transform your presentation skills with{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-bold">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-medium">
                 cutting-edge AI analysis
               </span>{" "}
               of speech patterns, body language, and communication
@@ -251,7 +251,7 @@ export default function SpeechAnalyzerPage() {
 
             {/* Floating stats */}
             <motion.div
-              className="flex justify-center space-x-12 mt-12"
+              className="flex justify-center space-x-8 mt-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.9, duration: 0.8 }}
@@ -263,7 +263,7 @@ export default function SpeechAnalyzerPage() {
               ].map((stat, index) => (
                 <motion.div
                   key={index}
-                  animate={{ y: [0, -15, 0] }}
+                  animate={{ y: [0, -10, 0] }}
                   transition={{
                     duration: 3,
                     repeat: Infinity,
@@ -272,15 +272,15 @@ export default function SpeechAnalyzerPage() {
                   className="text-center"
                 >
                   <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    className="w-16 h-16 mx-auto mb-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center"
+                    whileHover={{ scale: 1.05 }}
+                    className="w-8 h-8 mx-auto mb-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center"
                   >
-                    <stat.icon className="h-8 w-8 text-white" />
+                    <stat.icon className="h-4 w-4 text-white" />
                   </motion.div>
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-sm font-bold text-white">
                     {stat.value}
                   </div>
-                  <div className="text-gray-300 text-sm">{stat.label}</div>
+                  <div className="text-gray-300 text-xs">{stat.label}</div>
                 </motion.div>
               ))}
             </motion.div>
@@ -291,7 +291,7 @@ export default function SpeechAnalyzerPage() {
             initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1.2 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
           >
             {[
               {
@@ -342,20 +342,20 @@ export default function SpeechAnalyzerPage() {
                   className={`bg-gradient-to-br ${feature.bgGradient} border ${feature.borderColor} backdrop-blur-xl hover:shadow-2xl transition-all duration-500 h-full relative overflow-hidden group`}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <CardContent className="p-8 text-center relative">
+                  <CardContent className="p-4 text-center relative">
                     <motion.div
-                      whileHover={{ rotate: 360, scale: 1.3 }}
+                      whileHover={{ rotate: 360, scale: 1.1 }}
                       transition={{ duration: 0.8 }}
-                      className={`h-16 w-16 mx-auto mb-6 p-4 rounded-full bg-gradient-to-r ${feature.gradient} shadow-lg`}
+                      className={`h-8 w-8 mx-auto mb-3 p-2 rounded-full bg-gradient-to-r ${feature.gradient} shadow-lg`}
                     >
-                      <feature.icon className="h-8 w-8 text-white" />
+                      <feature.icon className="h-4 w-4 text-white" />
                     </motion.div>
                     <h3
-                      className={`text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${feature.gradient} mb-4`}
+                      className={`text-base font-semibold text-transparent bg-clip-text bg-gradient-to-r ${feature.gradient} mb-2`}
                     >
                       {feature.title}
                     </h3>
-                    <p className="text-gray-200 text-sm leading-relaxed">
+                    <p className="text-gray-200 text-xs leading-relaxed">
                       {feature.description}
                     </p>
 
@@ -399,7 +399,7 @@ export default function SpeechAnalyzerPage() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.6, duration: 0.8 }}
-            className="mb-16"
+            className="mb-12"
           >
             <Tabs defaultValue="upload" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-12 bg-gray-800/60 border-gray-600/50 backdrop-blur-xl h-16">
@@ -428,17 +428,17 @@ export default function SpeechAnalyzerPage() {
                   <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-600/50 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-cyan-500/5"></div>
                     <CardHeader className="relative">
-                      <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center">
+                      <CardTitle className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center">
                         <motion.div
-                          animate={{ scale: [1, 1.1, 1] }}
+                          animate={{ scale: [1, 1.02, 1] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          className="mr-4 p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl"
+                          className="mr-2 p-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded"
                         >
-                          <Upload className="h-8 w-8 text-white" />
+                          <Upload className="h-4 w-4 text-white" />
                         </motion.div>
                         Upload Your Video
                       </CardTitle>
-                      <CardDescription className="text-gray-300 text-xl">
+                      <CardDescription className="text-gray-300 text-sm">
                         Upload a video file to get comprehensive speech and
                         gesture analysis powered by AI
                       </CardDescription>
@@ -447,22 +447,22 @@ export default function SpeechAnalyzerPage() {
                       <motion.div
                         whileHover={{ scale: 1.02 }}
                         transition={{ duration: 0.3 }}
-                        className="border-3 border-dashed border-gradient-to-r from-blue-400 to-cyan-400 rounded-2xl p-16 text-center hover:border-cyan-300 transition-all duration-500 bg-gradient-to-br from-blue-900/10 to-cyan-900/10"
+                        className="border-2 border-dashed border-gradient-to-r from-blue-400 to-cyan-400 rounded-xl p-4 text-center hover:border-cyan-300 transition-all duration-500 bg-gradient-to-br from-blue-900/10 to-cyan-900/10"
                       >
                         <motion.div
-                          animate={{ y: [0, -10, 0] }}
+                          animate={{ y: [0, -4, 0] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          className="mb-8"
+                          className="mb-3"
                         >
-                          <Upload className="h-24 w-24 text-cyan-400 mx-auto mb-6" />
+                          <Upload className="h-8 w-8 text-cyan-400 mx-auto mb-2" />
                         </motion.div>
-                        <h3 className="text-2xl font-bold text-white mb-4">
+                        <h3 className="text-sm font-semibold text-white mb-1">
                           Drop your video here or click to browse
                         </h3>
-                        <p className="text-gray-300 mb-8 text-lg">
+                        <p className="text-gray-300 mb-3 text-xs">
                           Supports MP4, MOV, AVI files up to 100MB
                         </p>
-                        <div className="flex justify-center space-x-4 text-sm text-gray-400 mb-8">
+                        <div className="flex justify-center space-x-4 text-sm text-gray-400 mb-6">
                           <div className="flex items-center space-x-2">
                             <Activity className="h-4 w-4" />
                             <span>Speech Analysis</span>
@@ -486,13 +486,13 @@ export default function SpeechAnalyzerPage() {
                             disabled={isAnalyzing}
                           />
                           <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                           >
                             <Button
-                              size="lg"
+                              size="sm"
                               disabled={isAnalyzing}
-                              className="h-16 px-12 text-xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-purple-600 hover:from-blue-700 hover:via-cyan-700 hover:to-purple-700 pointer-events-none shadow-lg"
+                              className="h-8 px-4 text-sm font-medium bg-gradient-to-r from-blue-600 via-cyan-600 to-purple-600 hover:from-blue-700 hover:via-cyan-700 hover:to-purple-700 pointer-events-none shadow-lg"
                             >
                               {isAnalyzing ? (
                                 <div className="flex items-center">
@@ -503,13 +503,13 @@ export default function SpeechAnalyzerPage() {
                                       repeat: Infinity,
                                       ease: "linear",
                                     }}
-                                    className="w-6 h-6 border-2 border-white border-t-transparent rounded-full mr-3"
+                                    className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"
                                   />
                                   Analyzing...
                                 </div>
                               ) : (
                                 <div className="flex items-center">
-                                  <Sparkles className="h-6 w-6 mr-3" />
+                                  <Sparkles className="h-5 w-5 mr-2" />
                                   Choose File
                                 </div>
                               )}
@@ -531,17 +531,17 @@ export default function SpeechAnalyzerPage() {
                   <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-600/50 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5"></div>
                     <CardHeader className="relative">
-                      <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center">
+                      <CardTitle className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center">
                         <motion.div
-                          animate={{ scale: [1, 1.1, 1] }}
+                          animate={{ scale: [1, 1.02, 1] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          className="mr-4 p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl"
+                          className="mr-2 p-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded"
                         >
-                          <Camera className="h-8 w-8 text-white" />
+                          <Camera className="h-4 w-4 text-white" />
                         </motion.div>
                         Live Speech Analysis
                       </CardTitle>
-                      <CardDescription className="text-gray-300 text-xl">
+                      <CardDescription className="text-gray-300 text-sm">
                         Start recording to get real-time feedback on your speech
                         patterns and body language
                       </CardDescription>
@@ -554,16 +554,16 @@ export default function SpeechAnalyzerPage() {
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-pink-600/10"></div>
                         <div className="text-center text-white relative z-10">
                           <motion.div
-                            animate={{ scale: [1, 1.1, 1] }}
+                            animate={{ scale: [1, 1.01, 1] }}
                             transition={{ duration: 2, repeat: Infinity }}
-                            className="mb-6"
+                            className="mb-2"
                           >
-                            <Video className="h-20 w-20 mx-auto opacity-60 text-purple-400" />
+                            <Video className="h-8 w-8 mx-auto opacity-60 text-purple-400" />
                           </motion.div>
-                          <h3 className="text-2xl font-semibold mb-2">
+                          <h3 className="text-sm font-medium mb-1">
                             Camera Preview
                           </h3>
-                          <p className="text-gray-300 mb-4">
+                          <p className="text-gray-300 mb-2 text-xs">
                             Recording duration: 10 seconds
                           </p>
                           <div className="flex justify-center space-x-6 text-sm text-gray-400">
@@ -580,14 +580,14 @@ export default function SpeechAnalyzerPage() {
                       </motion.div>
                       <div className="flex justify-center">
                         <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                         >
                           <Button
-                            size="lg"
+                            size="sm"
                             onClick={handleWebcamRecording}
                             disabled={isRecording}
-                            className="h-16 px-12 text-xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 shadow-lg relative overflow-hidden"
+                            className="h-8 px-4 text-sm font-medium bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 shadow-lg relative overflow-hidden"
                           >
                             <motion.div
                               className="absolute inset-0 bg-white/20"
@@ -604,13 +604,13 @@ export default function SpeechAnalyzerPage() {
                                       duration: 1,
                                       repeat: Infinity,
                                     }}
-                                    className="w-6 h-6 bg-red-500 rounded-full mr-3"
+                                    className="w-5 h-5 bg-red-500 rounded-full mr-2"
                                   />
                                   Recording...
                                 </>
                               ) : (
                                 <>
-                                  <Mic className="h-6 w-6 mr-3" />
+                                  <Mic className="h-5 w-5 mr-2" />
                                   Start Recording
                                 </>
                               )}
@@ -673,15 +673,15 @@ export default function SpeechAnalyzerPage() {
                     </div>
 
                     <motion.h3
-                      className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-6"
-                      animate={{ scale: [1, 1.05, 1] }}
+                      className="text-base font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-3"
+                      animate={{ scale: [1, 1.01, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     >
                       AI Analysis in Progress
                     </motion.h3>
 
                     <motion.p
-                      className="text-gray-200 mb-4 text-xl"
+                      className="text-gray-200 mb-2 text-xs"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3 }}
@@ -691,7 +691,7 @@ export default function SpeechAnalyzerPage() {
                     </motion.p>
 
                     <motion.p
-                      className="text-gray-400 mb-10 text-lg"
+                      className="text-gray-400 mb-4 text-xs"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.5 }}
@@ -795,24 +795,24 @@ export default function SpeechAnalyzerPage() {
                   transition={{ delay: 0.2 }}
                 >
                   <div>
-                    <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-2">
+                    <h2 className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-1">
                       Analysis Results
                     </h2>
-                    <p className="text-gray-300 text-lg">
+                    <p className="text-gray-300 text-xs">
                       Comprehensive AI-powered assessment of your presentation
                     </p>
                   </div>
                   <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="mt-4 md:mt-0"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="mt-2 md:mt-0"
                   >
                     <Button
                       onClick={downloadReport}
-                      size="lg"
-                      className="h-14 px-8 text-lg font-bold bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 shadow-lg"
+                      size="sm"
+                      className="h-8 px-4 text-sm font-medium bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 shadow-lg"
                     >
-                      <Download className="h-6 w-6 mr-3" />
+                      <Download className="h-4 w-4 mr-1" />
                       Download Report
                     </Button>
                   </motion.div>
@@ -864,25 +864,25 @@ export default function SpeechAnalyzerPage() {
                         className={`bg-gradient-to-br ${card.bgGradient} border ${card.borderColor} backdrop-blur-xl shadow-2xl h-full relative overflow-hidden group`}
                       >
                         <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <CardHeader className="relative">
+                        <CardHeader className="relative p-4">
                           <CardTitle
-                            className={`flex items-center space-x-3 text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${card.gradient}`}
+                            className={`flex items-center space-x-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r ${card.gradient}`}
                           >
                             <motion.div
                               whileHover={{ rotate: 360 }}
                               transition={{ duration: 0.8 }}
-                              className={`p-3 rounded-full bg-gradient-to-r ${card.gradient}`}
+                              className={`p-1 rounded bg-gradient-to-r ${card.gradient}`}
                             >
-                              <card.icon className="h-6 w-6 text-white" />
+                              <card.icon className="h-3 w-3 text-white" />
                             </motion.div>
                             {card.title}
                           </CardTitle>
-                          <CardDescription className="text-gray-300 text-lg">
+                          <CardDescription className="text-gray-300 text-xs">
                             {card.description}
                           </CardDescription>
                         </CardHeader>
-                        <CardContent className="relative">
-                          <div className="space-y-6">
+                        <CardContent className="relative p-4">
+                          <div className="space-y-4">
                             <div className="text-center">
                               <motion.div
                                 initial={{ scale: 0 }}
@@ -892,11 +892,11 @@ export default function SpeechAnalyzerPage() {
                                   duration: 0.8,
                                   type: "spring",
                                 }}
-                                className={`text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r ${card.gradient} mb-2`}
+                                className={`text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r ${card.gradient} mb-1`}
                               >
                                 {card.score}
                               </motion.div>
-                              <div className="text-gray-400 text-sm">
+                              <div className="text-gray-400 text-xs">
                                 out of 100
                               </div>
                             </div>
@@ -929,27 +929,27 @@ export default function SpeechAnalyzerPage() {
                   <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-600/50 backdrop-blur-xl shadow-2xl relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
                     <CardHeader className="relative">
-                      <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 flex items-center">
+                      <CardTitle className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 flex items-center">
                         <motion.div
-                          animate={{ scale: [1, 1.1, 1] }}
+                          animate={{ scale: [1, 1.05, 1] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          className="mr-4"
+                          className="mr-3"
                         >
-                          <MessageSquare className="h-8 w-8 text-blue-400" />
+                          <MessageSquare className="h-6 w-6 text-blue-400" />
                         </motion.div>
                         Speech Transcript
                       </CardTitle>
-                      <CardDescription className="text-gray-300 text-xl">
+                      <CardDescription className="text-gray-300 text-base">
                         AI-generated transcript of your presentation
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="relative">
                       <motion.div
-                        className="bg-gradient-to-br from-gray-900/60 to-gray-800/60 p-8 rounded-xl border border-gray-600/50 backdrop-blur-sm"
+                        className="bg-gradient-to-br from-gray-900/60 to-gray-800/60 p-6 rounded-xl border border-gray-600/50 backdrop-blur-sm"
                         whileHover={{ scale: 1.01 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <p className="text-gray-200 leading-relaxed text-lg font-medium">
+                        <p className="text-gray-200 leading-relaxed text-base">
                           {analysisResults.transcript}
                         </p>
                       </motion.div>
@@ -966,28 +966,28 @@ export default function SpeechAnalyzerPage() {
                   <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 backdrop-blur-xl shadow-2xl relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5"></div>
                     <CardHeader className="relative">
-                      <CardTitle className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center">
+                      <CardTitle className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center">
                         <motion.div
-                          animate={{ scale: [1, 1.1, 1] }}
+                          animate={{ scale: [1, 1.05, 1] }}
                           transition={{ duration: 2, repeat: Infinity }}
-                          className="mr-4"
+                          className="mr-3"
                         >
-                          <Brain className="h-8 w-8 text-indigo-400" />
+                          <Brain className="h-6 w-6 text-indigo-400" />
                         </motion.div>
                         AI Feedback & Recommendations
                       </CardTitle>
-                      <CardDescription className="text-gray-300 text-xl">
+                      <CardDescription className="text-gray-300 text-base">
                         Personalized insights powered by advanced AI to enhance
                         your presentation skills
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="relative">
                       <motion.div
-                        className="bg-gradient-to-br from-indigo-950/60 to-purple-950/60 p-8 rounded-xl border border-indigo-600/50 backdrop-blur-sm"
+                        className="bg-gradient-to-br from-indigo-950/60 to-purple-950/60 p-6 rounded-xl border border-indigo-600/50 backdrop-blur-sm"
                         whileHover={{ scale: 1.01 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <p className="text-gray-200 leading-relaxed text-lg font-medium">
+                        <p className="text-gray-200 leading-relaxed text-base">
                           {analysisResults.feedback}
                         </p>
                       </motion.div>
@@ -1002,22 +1002,22 @@ export default function SpeechAnalyzerPage() {
                   transition={{ delay: 1.2, duration: 0.6 }}
                   className="text-center bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-xl rounded-2xl p-12 border border-gray-600/50"
                 >
-                  <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400 mb-4">
+                  <h3 className="text-base font-semibold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400 mb-2">
                     Ready to Improve Further?
                   </h3>
-                  <p className="text-gray-300 text-xl mb-8">
+                  <p className="text-gray-300 text-sm mb-4">
                     Practice with more videos to track your progress and master
                     your presentation skills
                   </p>
                   <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     <Button
-                      size="lg"
-                      className="h-16 px-12 text-xl font-bold bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 hover:from-green-600 hover:via-blue-600 hover:to-purple-600 shadow-lg"
+                      size="sm"
+                      className="h-8 px-4 text-sm font-medium bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 hover:from-green-600 hover:via-blue-600 hover:to-purple-600 shadow-lg"
                     >
-                      <ArrowRight className="h-6 w-6 mr-3" />
+                      <ArrowRight className="h-4 w-4 mr-1" />
                       Analyze Another Video
                     </Button>
                   </motion.div>
