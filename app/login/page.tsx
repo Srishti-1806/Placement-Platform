@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,7 +30,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSound } from "@/hooks/use-sound";
 import { GalaxyHover } from "@/components/galaxy-hover";
 
-export default function LoginPage() {
+// Separate component that uses useSearchParams
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +39,7 @@ export default function LoginPage() {
   const { login, isLoading } = useAuth();
   const { playSound } = useSound();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // This needs to be wrapped in Suspense
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -244,5 +245,32 @@ export default function LoginPage() {
         </motion.div>
       </GalaxyHover>
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function LoginLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 relative">
+      <GalaxyHover className="w-full max-w-md">
+        <Card className="bg-gray-900/90 border-gray-700 backdrop-blur-md shadow-2xl">
+          <CardContent className="flex items-center justify-center p-12">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-purple-400 mx-auto mb-4" />
+              <p className="text-gray-400">Loading secure login...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </GalaxyHover>
+    </div>
+  );
+}
+
+// Main component with Suspense wrapper
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginLoading />}>
+      <LoginForm />
+    </Suspense>
   );
 }
