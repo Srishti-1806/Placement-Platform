@@ -85,7 +85,7 @@ export default function LoginPage() {
                 Welcome Back
               </CardTitle>
               <CardDescription className="text-gray-400">
-                Sign in to access your placement dashboard
+                Secure login to access your placement dashboard
               </CardDescription>
             </CardHeader>
 
@@ -180,11 +180,11 @@ export default function LoginPage() {
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing In...
+                        Logging In...
                       </>
                     ) : (
                       <>
-                        Sign In <ArrowRight className="ml-2 h-4 w-4" />
+                        Secure Login <ArrowRight className="ml-2 h-4 w-4" />
                       </>
                     )}
                   </Button>
