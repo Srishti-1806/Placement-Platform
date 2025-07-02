@@ -42,6 +42,7 @@ __pycache__
 temp
 public/pdfs/summary.pdf
 public/pdfs/transcript.pdf
+<<<<<<< HEAD
 
 # Docker
 .dockerignore
@@ -95,3 +96,6 @@ temp/
 dist/
 build/
 .next/
+=======
+.config/
+>>>>>>> 6fb4e81c4e52607bfc26511c736e9f017fad58a6
