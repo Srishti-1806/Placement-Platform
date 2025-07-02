@@ -52,8 +52,9 @@ jobs:
         timeout: 300s
         command_timeout: 10m
         script: |
-          # Install Docker if not present (Amazon Linux commands)
+          # Install Docker if not present
           if ! command -v docker &> /dev/null; then
+            echo "📦 Installing Docker..."
             sudo yum update -y
             sudo yum install -y docker
             sudo systemctl start docker
@@ -61,26 +62,27 @@ jobs:
             sudo usermod -aG docker ec2-user
           fi
           
-          # Install Docker Compose if not present
-          if ! command -v docker-compose &> /dev/null; then
-            sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
-          fi
+          # Ensure Docker is running
+          sudo systemctl start docker || true
           
-          # Navigate to app directory
-          cd /home/ec2-user/placementpro || mkdir -p /home/ec2-user/placementpro && cd /home/ec2-user/placementpro
+          # Create app directory
+          mkdir -p /home/ec2-user/placementpro
+          cd /home/ec2-user/placementpro
           
           # Stop existing container
-          docker stop placementpro || true
-          docker rm placementpro || true
+          echo "🛑 Stopping existing container..."
+          docker stop placementpro 2>/dev/null || true
+          docker rm placementpro 2>/dev/null || true
           
           # Pull latest image
+          echo "📥 Pulling latest Docker image..."
           docker pull ${{ secrets.DOCKER_USERNAME }}/placementpro:latest
           
-          # Create directories
+          # Create necessary directories
           mkdir -p temp static/reports static/summaries static/transcripts
           
           # Run new container
+          echo "🚀 Starting new container..."
           docker run -d \
             --name placementpro \
             -p 8000:8000 \
@@ -90,11 +92,38 @@ jobs:
             --restart unless-stopped \
             ${{ secrets.DOCKER_USERNAME }}/placementpro:latest
           
-          # Wait for container to start
-          sleep 30
+          # Wait and verify
+          echo "⏳ Waiting for container to start..."
+          sleep 45
           
-          # Test the deployment
-          curl -f http://localhost:8000/api/health || echo "Health check failed"
+          # Check container status
+          if docker ps | grep placementpro; then
+            echo "✅ Container is running successfully"
+          else
+            echo "❌ Container failed to start"
+            docker logs placementpro
+            exit 1
+          fi
           
-          # Clean up old images
+          # Health check with retries
+          echo "🏥 Running health checks..."
+          for i in {1..6}; do
+            if curl -f http://localhost:8000/api/health; then
+              echo "✅ Health check passed!"
+              break
+            else
+              echo "⏳ Health check attempt $i/6 failed, retrying in 10s..."
+              sleep 10
+            fi
+            
+            if [ $i -eq 6 ]; then
+              echo "❌ Health check failed after 6 attempts"
+              docker logs placementpro
+              exit 1
+            fi
+          done
+          
+          # Cleanup old images
           docker image prune -f
+          
+          echo "🎉 Deployment completed successfully!"
