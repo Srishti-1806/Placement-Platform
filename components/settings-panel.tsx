@@ -77,7 +77,7 @@ export function SettingsPanel() {
                         <Label htmlFor="galaxy-toggle" className="text-gray-300">
                           Galaxy Background
                         </Label>
-                        <Switch id="galaxy-toggle" checked={galaxyEnabled} onCheckedChange={setGalaxyEnabled} />
+                        <Switch className="border-gray-700" id="galaxy-toggle" checked={galaxyEnabled} onCheckedChange={setGalaxyEnabled} />
                       </div>
                     </CardContent>
                   </Card>
@@ -95,7 +95,7 @@ export function SettingsPanel() {
                         <Label htmlFor="sound-toggle" className="text-gray-300">
                           Sound Effects
                         </Label>
-                        <Switch id="sound-toggle" checked={soundEnabled} onCheckedChange={setSoundEnabled} />
+                        <Switch className="border-gray-700"  id="sound-toggle" checked={soundEnabled} onCheckedChange={setSoundEnabled} />
                       </div>
                     </CardContent>
                   </Card>

@@ -1,6 +1,28 @@
-version: '3.9'
+version: '3.8'
 
 services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - ./temp:/app/temp
+      - ./static:/app/static
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - app
+    restart: unless-stopped
+
   ffmpeg:
     image: jrottenberg/ffmpeg:latest
     container_name: ffmpeg
