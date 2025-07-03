@@ -79,10 +79,26 @@ jobs:
           # Navigate to app directory
           cd /home/ec2-user/placementpro || mkdir -p /home/ec2-user/placementpro && cd /home/ec2-user/placementpro
           
-          # Stop existing containers
+          # Complete cleanup - Stop all containers and processes using our ports
+          echo "🧹 Complete cleanup of existing services..."
+          
+          # Stop and remove existing containers
           echo "🛑 Stopping existing containers..."
           sudo docker stop placementpro 2>/dev/null || true
           sudo docker rm placementpro 2>/dev/null || true
+          
+          # Kill any processes using our ports
+          echo "🔍 Checking for processes using ports 3000, 5000, 8000..."
+          sudo lsof -ti:3000 | xargs -r sudo kill -9 2>/dev/null || true
+          sudo lsof -ti:5000 | xargs -r sudo kill -9 2>/dev/null || true
+          sudo lsof -ti:8000 | xargs -r sudo kill -9 2>/dev/null || true
+          
+          # Wait for ports to be released
+          echo "⏳ Waiting for ports to be released..."
+          sleep 10
+          
+          # Remove any orphaned containers
+          sudo docker container prune -f
           
           # Pull latest image
           echo "📥 Pulling latest Docker image..."
@@ -105,6 +121,20 @@ jobs:
             --memory="3g" \
             --cpus="2.0" \
             ${{ secrets.DOCKER_USERNAME }}/placementpro:latest
+          
+          # Check if container started successfully
+          if [ $? -eq 0 ]; then
+            echo "✅ Container started successfully"
+          else
+            echo "❌ Container failed to start, checking port conflicts..."
+            echo "🔍 Checking what's using our ports:"
+            sudo lsof -i:3000 || echo "Port 3000 is free"
+            sudo lsof -i:5000 || echo "Port 5000 is free"
+            sudo lsof -i:8000 || echo "Port 8000 is free"
+            echo "📋 Docker logs:"
+            sudo docker logs placementpro 2>/dev/null || echo "No logs available"
+            exit 1
+          fi
           
           # Wait for all services to initialize
           echo "⏳ Waiting for all services to start..."
