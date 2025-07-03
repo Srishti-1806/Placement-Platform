@@ -1,27 +1,39 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Menu, X, User, LogOut } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import { useAuth } from "@/contexts/auth-context"
-import { useSound } from "@/hooks/use-sound"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Menu, X, User, LogOut } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/auth-context";
+import { useSound } from "@/hooks/use-sound";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, logout } = useAuth()
-  const { playSound } = useSound()
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const { user, logout } = useAuth();
+  const { playSound } = useSound();
 
+  // Ensure component has hydrated on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   const handleMenuToggle = () => {
-    setIsMenuOpen(!isMenuOpen)
-    playSound(isMenuOpen ? "close" : "open")
-  }
+    setIsMenuOpen(!isMenuOpen);
+    playSound(isMenuOpen ? "close" : "open");
+  };
 
   const handleLogout = () => {
-    logout()
-    playSound("success")
-  }
+    logout();
+    if (isClient) {
+      const redirectTo = searchParams?.get("redirect") || "/";
+      router.push(redirectTo);
+      playSound("success");
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
@@ -56,7 +68,7 @@ export function Header() {
             >
               About
             </Link>
-            {user && (
+            {isClient && user && (
               <Link
                 href="/dashboard"
                 className="text-gray-300 hover:text-white transition-colors"
@@ -69,36 +81,55 @@ export function Header() {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            {user ? (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <User className="w-5 h-5 text-gray-400" />
-                  <span className="text-white">{user.name}</span>
+            {isClient ? (
+              user ? (
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <User className="w-5 h-5 text-gray-400" />
+                    <span className="text-white">{user.name}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLogout}
+                    onMouseEnter={() => playSound("hover")}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLogout}
-                  onMouseEnter={() => playSound("hover")}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
-              </div>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    asChild
+                    onMouseEnter={() => playSound("hover")}
+                    className="text-gray-300 hover:text-white hover:bg-gray-800"
+                  >
+                    <Link href="/login">Login</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    onMouseEnter={() => playSound("hover")}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                  >
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                </>
+              )
             ) : (
+              // Show loading state or default state during SSR
               <>
                 <Button
                   variant="ghost"
                   asChild
-                  onMouseEnter={() => playSound("hover")}
                   className="text-gray-300 hover:text-white hover:bg-gray-800"
                 >
                   <Link href="/login">Login</Link>
                 </Button>
                 <Button
                   asChild
-                  onMouseEnter={() => playSound("hover")}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
                 >
                   <Link href="/signup">Sign Up</Link>
@@ -108,8 +139,16 @@ export function Header() {
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden text-white" onClick={handleMenuToggle} onMouseEnter={() => playSound("hover")}>
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          <button
+            className="md:hidden text-white"
+            onClick={handleMenuToggle}
+            onMouseEnter={() => playSound("hover")}
+          >
+            {isMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
 
@@ -139,7 +178,7 @@ export function Header() {
                 >
                   About
                 </Link>
-                {user && (
+                {isClient && user && (
                   <Link
                     href="/dashboard"
                     className="text-gray-300 hover:text-white transition-colors"
@@ -151,36 +190,55 @@ export function Header() {
                 )}
 
                 <div className="pt-4 border-t border-gray-800">
-                  {user ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-2">
-                        <User className="w-5 h-5 text-gray-400" />
-                        <span className="text-white">{user.name}</span>
+                  {isClient ? (
+                    user ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                          <User className="w-5 h-5 text-gray-400" />
+                          <span className="text-white">{user.name}</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleLogout}
+                          onMouseEnter={() => playSound("hover")}
+                          className="w-full border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                        >
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Logout
+                        </Button>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleLogout}
-                        onMouseEnter={() => playSound("hover")}
-                        className="w-full border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Logout
-                      </Button>
-                    </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Button
+                          variant="ghost"
+                          asChild
+                          onMouseEnter={() => playSound("hover")}
+                          className="w-full text-gray-300 hover:text-white hover:bg-gray-800"
+                        >
+                          <Link href="/login">Login</Link>
+                        </Button>
+                        <Button
+                          asChild
+                          onMouseEnter={() => playSound("hover")}
+                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                        >
+                          <Link href="/signup">Sign Up</Link>
+                        </Button>
+                      </div>
+                    )
                   ) : (
+                    // Default state during SSR
                     <div className="space-y-2">
                       <Button
                         variant="ghost"
                         asChild
-                        onMouseEnter={() => playSound("hover")}
                         className="w-full text-gray-300 hover:text-white hover:bg-gray-800"
                       >
                         <Link href="/login">Login</Link>
                       </Button>
                       <Button
                         asChild
-                        onMouseEnter={() => playSound("hover")}
                         className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
                       >
                         <Link href="/signup">Sign Up</Link>
@@ -194,5 +252,5 @@ export function Header() {
         </AnimatePresence>
       </div>
     </header>
-  )
+  );
 }
