@@ -186,18 +186,28 @@ def start_nextjs_server():
             return None
     return None
 
-# Add chat server startup to your main.py
+# Fix the chat server startup function
 def start_chat_server():
     """Start chat server in a separate thread"""
     try:
         print("💬 Starting chat server...")
+        # Ensure we're using the correct path and passing environment variables
         process = subprocess.Popen(
             ["python", "chat_server.py"],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            env={**os.environ, "PORT": "5000", "HOST": "0.0.0.0"}
         )
-        print("✅ Chat server started on port 5000")
-        return process
+        
+        # Wait briefly to check if process started successfully
+        time.sleep(2)
+        if process.poll() is None:
+            print("✅ Chat server started on port 5000")
+            return process
+        else:
+            stdout, stderr = process.communicate()
+            print(f"❌ Chat server failed to start: {stderr.decode()}")
+            return None
     except Exception as e:
         print(f"❌ Failed to start chat server: {e}")
         return None
@@ -211,31 +221,102 @@ async def serve_frontend():
     elif os.path.exists(".next/server/pages/index.html"):
         return FileResponse(".next/server/pages/index.html")
     else:
-        # Fallback response
+        # Improved fallback response with auto-redirect and better UI
         return HTMLResponse("""
         <!DOCTYPE html>
         <html>
         <head>
             <title>PlacementPro</title>
+            <meta http-equiv="refresh" content="5;url=http://51.21.252.8:3000">
             <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
-                .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+                body { 
+                    font-family: Arial, sans-serif; 
+                    text-align: center; 
+                    padding: 50px; 
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    margin: 0;
+                }
+                .container { 
+                    max-width: 600px; 
+                    margin: 0 auto; 
+                    background: rgba(255,255,255,0.1);
+                    backdrop-filter: blur(10px);
+                    padding: 30px; 
+                    border-radius: 10px; 
+                }
                 .status { color: #4CAF50; font-weight: bold; }
                 .error { color: #f44336; }
-                a { color: #2196F3; text-decoration: none; }
+                a { 
+                    color: #2196F3; 
+                    text-decoration: none;
+                    background: rgba(255,255,255,0.2);
+                    padding: 8px 15px;
+                    border-radius: 20px;
+                    margin: 5px;
+                    display: inline-block;
+                }
+                .loader {
+                    border: 5px solid rgba(255,255,255,0.3);
+                    border-radius: 50%;
+                    border-top: 5px solid white;
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+                    margin: 20px auto;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
             </style>
+            <script>
+                // Check if frontend is available
+                function checkFrontend() {
+                    fetch('http://51.21.252.8:3000', {mode: 'no-cors'})
+                        .then(() => {
+                            window.location.href = 'http://51.21.252.8:3000';
+                        })
+                        .catch(err => {
+                            console.log('Frontend not ready yet:', err);
+                            setTimeout(checkFrontend, 2000);
+                        });
+                }
+                
+                // Check if chat server is available
+                function checkChatServer() {
+                    fetch('http://51.21.252.8:5000', {mode: 'no-cors'})
+                        .then(() => {
+                            document.getElementById('chat-status').innerHTML = '✅ Chat Server: Online';
+                        })
+                        .catch(err => {
+                            console.log('Chat server not ready yet:', err);
+                            setTimeout(checkChatServer, 2000);
+                        });
+                }
+                
+                // Start checking when page loads
+                window.onload = function() {
+                    checkFrontend();
+                    checkChatServer();
+                };
+            </script>
         </head>
         <body>
             <div class="container">
                 <h1>🚀 PlacementPro</h1>
                 <p>Your AI-Powered Career Assistant Platform</p>
+                <div class="loader"></div>
                 <p class="status">✅ Backend API is running successfully!</p>
-                <p class="error">⚠️ Frontend build not found. Next.js frontend will be available at port 3000 when ready.</p>
+                <p class="error">⏳ Redirecting to frontend...</p>
+                <p id="chat-status">⏳ Checking Chat Server...</p>
                 <div style="margin: 20px 0;">
-                    <a href="/api/health">🏥 Health Check</a> | 
+                    <a href="http://51.21.252.8:3000">🎨 Frontend</a>
+                    <a href="/api/health">🏥 Health Check</a>
                     <a href="/docs">📖 API Documentation</a>
+                    <a href="http://51.21.252.8:5000">💬 Chat Server</a>
                 </div>
-                <p><small>Backend: Port 8000 | Frontend: Port 3000</small></p>
+                <p><small>Backend: Port 8000 | Frontend: Port 3000 | Chat: Port 5000</small></p>
             </div>
         </body>
         </html>
@@ -517,18 +598,20 @@ async def catch_all(path: str):
 if __name__ == "__main__":
     print("🚀 Starting PlacementPro...")
     
-    # Start chat server
-    chat_thread = threading.Thread(target=start_chat_server)
-    chat_thread.daemon = True
-    chat_thread.start()
+    # Start chat server and track the process
+    chat_process = start_chat_server()
     
     # Start Next.js in background thread
-    nextjs_thread = threading.Thread(target=start_nextjs_server)
-    nextjs_thread.daemon = True
-    nextjs_thread.start()
+    nextjs_process = start_nextjs_server()
     
-    # Wait a moment for services to start
-    time.sleep(5)
+    # Register cleanup handler for graceful shutdown
+    import atexit
+    def cleanup():
+        if chat_process:
+            chat_process.terminate()
+        if nextjs_process:
+            nextjs_process.terminate()
+    atexit.register(cleanup)
     
     # Start FastAPI
     port = int(os.getenv("PORT", 8000))
