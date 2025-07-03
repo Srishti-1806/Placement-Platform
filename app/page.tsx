@@ -484,12 +484,16 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 1 }}
               >
-                Navigate through the cosmos of career opportunities with{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 to-pink-400 font-bold">
+                Navigate through the cosmos of career opportunities with our{" "}
+                <span className="text-magenta-400 font-bold">
                   AI-powered tools
                 </span>
-                , vibrant community support, and comprehensive resources
-                designed for the next generation of tech professionals.
+                ,{" "}
+                <span className="text-magenta-400 font-bold">
+                  vibrant community support
+                </span>
+                , and comprehensive resources designed for the next generation
+                of tech professionals.
               </motion.p>
 
               {/* Enhanced Stats Row */}
