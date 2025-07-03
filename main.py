@@ -313,7 +313,6 @@ async def summarize_pdf(file: UploadFile = File(...)):
 async def convert_youtube(request: YouTubeRequest):
     if not youtube_converter:
         raise HTTPException(status_code=503, detail="YouTube Converter service not available")
-    
     try:
         result = youtube_converter.youtube_to_transcript(request.url)
         return result
