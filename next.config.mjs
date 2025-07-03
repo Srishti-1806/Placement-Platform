@@ -31,13 +31,8 @@ const nextConfig = {
     return config
   },
   
-  // FIXED: Changed from experimental.serverComponentsExternalPackages
+  // FIXED: Use serverExternalPackages instead of experimental.serverComponentsExternalPackages
   serverExternalPackages: ['sharp', 'onnxruntime-node'],
-  
-  // Keep experimental section for other features if needed
-  experimental: {
-    // Other experimental features can go here
-  },
 }
 
 export default nextConfig
