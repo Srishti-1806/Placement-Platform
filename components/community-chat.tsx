@@ -29,7 +29,7 @@ export default function CommunityChat() {
 
   useEffect(() => {
     // Initialize Socket.IO connection
-    socketRef.current = io("http://localhost:5000", {
+    socketRef.current = io("http://51.21.252.8:5000", {
       transports: ["websocket", "polling"],
     })
 

@@ -5,8 +5,9 @@ import time
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'placement_pro_secret_2024!'
-CORS(app, origins="*")
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+# Allow requests from your domain
+CORS(app, origins=["http://51.21.252.8", "http://51.21.252.8:3000", "http://localhost:3000"])
+socketio = SocketIO(app, cors_allowed_origins=["http://51.21.252.8", "http://51.21.252.8:3000", "http://localhost:3000"], async_mode='threading')
 
 # Store connected users
 connected_users = set()
