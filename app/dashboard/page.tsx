@@ -5,10 +5,20 @@ import { LogOut, User, Star, BookOpen, MessageSquare, FileText, BarChart3, Brief
 import { motion } from "framer-motion"
 import { InteractiveCard } from "@/components/interactive-card"
 import CircularGallery from "@/components/circular-gallery"
-import { useRouter } from "next/navigation"
+import { useRouter,useSearchParams } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context";
 
 export default function DashboardPage() {
+  const searchParams = useSearchParams();
+  const {logout} = useAuth();
   const router = useRouter()
+  const handlesignOutGoogle = async()=> {
+    const success = logout();
+    if(success){
+      const redirectTo = searchParams.get("redirect") || "/";
+      router.push(redirectTo);
+    }
+  }
 
   return (
     <div className="min-h-screen pt-20 px-4">
@@ -19,7 +29,7 @@ export default function DashboardPage() {
               <h1 className="text-3xl font-bold text-white mb-2">Welcome to Your Dashboard</h1>
               <p className="text-gray-400">Your placement journey starts here</p>
             </div>
-            <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
+            <Button onClick={handlesignOutGoogle} variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </Button>
