@@ -9,6 +9,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+  missingSuspenseWithCSRBailout: false,
+},
   
   // For production builds
   output: 'standalone',
