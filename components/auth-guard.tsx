@@ -184,58 +184,52 @@ function DefaultAuthGuard({ pathname }: { pathname: string }) {
             </motion.div>
           </motion.div>
 
-          {/* Heading - Larger and more dramatic */}
+          {/* Heading - Smaller font and secure login */}
           <motion.h1
-            className="text-6xl md:text-9xl font-black text-white mb-10 leading-tight"
+            className="text-4xl md:text-6xl font-black text-white mb-10 leading-tight"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 1 }}
           >
-            Premium{" "}
             <motion.span
-              className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 via-pink-400 to-fuchsia-400"
+              className="text-magenta-400"
               animate={{
-                backgroundPosition: ["0%", "100%", "0%"],
+                scale: [1, 1.05, 1],
               }}
-              transition={{ duration: 4, repeat: Infinity }}
-              style={{ backgroundSize: "300% 300%" }}
+              transition={{ duration: 2, repeat: Infinity }}
             >
-              Access
-            </motion.span>
-            <br />
+              Secure
+            </motion.span>{" "}
             <motion.span
-              className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-violet-400 to-magenta-400"
+              className="text-pink-400"
               animate={{
-                backgroundPosition: ["100%", "0%", "100%"],
+                scale: [1, 1.05, 1],
               }}
-              transition={{ duration: 4, repeat: Infinity, delay: 1 }}
-              style={{ backgroundSize: "300% 300%" }}
+              transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
             >
-              Required
+              Login
             </motion.span>
             <motion.div
-              className="inline-block ml-8"
+              className="inline-block ml-6"
               animate={{
                 rotate: [0, 25, -25, 0],
-                scale: [1, 1.4, 1],
+                scale: [1, 1.3, 1],
               }}
               transition={{ duration: 3, repeat: Infinity }}
             >
-              <Sparkles className="h-20 w-20 text-yellow-400" />
+              <Lock className="h-12 w-12 text-yellow-400" />
             </motion.div>
           </motion.h1>
 
           {/* Description */}
           <motion.p
-            className="text-2xl md:text-4xl text-gray-100 max-w-6xl mx-auto mb-16 leading-relaxed font-light"
+            className="text-xl md:text-2xl text-gray-100 max-w-6xl mx-auto mb-16 leading-relaxed font-light"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 1 }}
           >
             Unlock{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 to-pink-400 font-bold">
-              AI-powered tools
-            </span>{" "}
+            <span className="text-magenta-400 font-bold">AI-powered tools</span>{" "}
             and join thousands of successful students transforming their careers
             with PlacementPro!
           </motion.p>
@@ -314,12 +308,8 @@ function DefaultAuthGuard({ pathname }: { pathname: string }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.3, duration: 0.8 }}
           >
-            <h3 className="text-3xl md:text-5xl font-bold text-white mb-10">
-              What you{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-magenta-400 to-pink-400">
-                unlock
-              </span>
-              :
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-10">
+              What you <span className="text-magenta-400">unlock</span>:
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {[

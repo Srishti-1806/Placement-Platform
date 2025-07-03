@@ -186,14 +186,15 @@ def start_nextjs_server():
             return None
     return None
 
+
 # Fix the chat server startup function
 def start_chat_server():
     """Start chat server in a separate thread"""
     try:
         print("💬 Starting chat server...")
-        # Ensure we're using the correct path and passing environment variables
+        # Use the virtual environment Python
         process = subprocess.Popen(
-            ["python", "chat_server.py"],
+            ["/app/chat_venv/bin/python", "chat_server.py"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env={**os.environ, "PORT": "5000", "HOST": "0.0.0.0"}
