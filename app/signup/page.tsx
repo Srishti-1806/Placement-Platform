@@ -40,7 +40,7 @@ function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const { signupGithub, signupGoogle, isLoading } = useAuth();
+  const { signup, signupGithub, signupGoogle, isLoading } = useAuth();
   const { playSound } = useSound();
   const router = useRouter();
   const searchParams = useSearchParams(); // This needs to be wrapped in Suspense
@@ -49,31 +49,33 @@ function SignupForm() {
     e.preventDefault();
     setError("");
     playSound("click");
-    // const provider = new GoogleAuthProvider();
-    // if (!name || !email || !password || !confirmPassword) {
-    //   setError("Please fill in all fields");
-    //   playSound("error");
-    //   return;
-    // }
+    // Form validation
+    if (!name || !email || !password || !confirmPassword) {
+      setError("Please fill in all fields");
+      playSound("error");
+      return;
+    }
 
-    // if (password !== confirmPassword) {
-    //   setError("Passwords do not match");
-    //   playSound("error");
-    //   return;
-    // }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      playSound("error");
+      return;
+    }
 
-    // if (password.length < 6) {
-    //   setError("Password must be at least 6 characters");
-    //   playSound("error");
-    //   return;
-    // }
-    const success = await signupGoogle();
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      playSound("error");
+      return;
+    }
+
+    // Create account with email and password
+    const success = await signup(name, email, password);
     if (success) {
       playSound("success");
       const redirectTo = searchParams.get("redirect") || "/dashboard";
       router.push(redirectTo);
     } else {
-      setError("Failed to create account");
+      setError("Failed to create account. Email might already be in use.");
       playSound("error");
     }
   };
