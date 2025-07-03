@@ -1,281 +1,189 @@
 "use client";
 
-<<<<<<< HEAD
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Menu, X, User, LogOut } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import { useAuth } from "@/contexts/auth-context"
-import { useSound } from "@/hooks/use-sound"
-import { useRouter, useSearchParams } from "next/navigation"
-export function Header() {
-  const searchParams = useSearchParams();
-  const router = useRouter()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, logout } = useAuth()
-  const { playSound } = useSound()
-=======
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/auth-context";
 import { useSound } from "@/hooks/use-sound";
-import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Header() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
   const { user, logout } = useAuth();
   const { playSound } = useSound();
 
-  // Ensure component has hydrated on client
+  // Close menu when route changes
   useEffect(() => {
-    setIsClient(true);
+    setIsMenuOpen(false);
   }, []);
->>>>>>> aea0d9134b5b874463b4c70eba600a09d686fb88
-  const handleMenuToggle = () => {
-    setIsMenuOpen(!isMenuOpen);
-    playSound(isMenuOpen ? "close" : "open");
-  };
 
   const handleLogout = () => {
-<<<<<<< HEAD
-    logout()
-    const redirectTo = searchParams.get("redirect") || "/";
-    router.push(redirectTo);
-    playSound("success")
-  }
-=======
+    playSound("click");
     logout();
-    if (isClient) {
-      const redirectTo = searchParams?.get("redirect") || "/";
-      router.push(redirectTo);
-      playSound("success");
-    }
   };
->>>>>>> aea0d9134b5b874463b4c70eba600a09d686fb88
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <motion.div
-              className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex items-center justify-center"
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              whileTap={{ scale: 0.9 }}
-              onMouseEnter={() => playSound("hover")}
-            >
-              <span className="text-white font-bold text-xl">P</span>
-            </motion.div>
-            <span className="text-2xl font-bold text-white">PlacementPro</span>
-          </Link>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/40">
+      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+        <Link href="/" className="flex items-center space-x-2" onClick={() => playSound("click")}>
+          <span className="font-bold text-xl text-foreground">PlacementPro</span>
+        </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link
-              href="/"
-              className="text-gray-300 hover:text-white transition-colors"
-              onMouseEnter={() => playSound("hover")}
-            >
-              Home
-            </Link>
-            <Link
-              href="/about"
-              className="text-gray-300 hover:text-white transition-colors"
-              onMouseEnter={() => playSound("hover")}
-            >
-              About
-            </Link>
-            {isClient && user && (
-              <Link
-                href="/dashboard"
-                className="text-gray-300 hover:text-white transition-colors"
-                onMouseEnter={() => playSound("hover")}
-              >
-                Dashboard
+        {/* Desktop Navigation */}
+        <NavigationMenu className="hidden md:flex">
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <Link href="/dashboard" legacyBehavior passHref>
+                <NavigationMenuLink
+                  className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+                  onClick={() => playSound("hover")}
+                >
+                  Dashboard
+                </NavigationMenuLink>
               </Link>
-            )}
-          </nav>
-
-          {/* Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            {isClient ? (
-              user ? (
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <User className="w-5 h-5 text-gray-400" />
-                    <span className="text-white">{user.name}</span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleLogout}
-                    onMouseEnter={() => playSound("hover")}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <Button
-                    variant="ghost"
-                    asChild
-                    onMouseEnter={() => playSound("hover")}
-                    className="text-gray-300 hover:text-white hover:bg-gray-800"
-                  >
-                    <Link href="/login">Login</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    onMouseEnter={() => playSound("hover")}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-                  >
-                    <Link href="/signup">Sign Up</Link>
-                  </Button>
-                </>
-              )
-            ) : (
-              // Show loading state or default state during SSR
-              <>
-                <Button
-                  variant="ghost"
-                  asChild
-                  className="text-gray-300 hover:text-white hover:bg-gray-800"
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <Link href="/community" legacyBehavior passHref>
+                <NavigationMenuLink
+                  className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+                  onClick={() => playSound("hover")}
                 >
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button
-                  asChild
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                  Community
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <Link href="/interview" legacyBehavior passHref>
+                <NavigationMenuLink
+                  className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
+                  onClick={() => playSound("hover")}
                 >
-                  <Link href="/signup">Sign Up</Link>
-                </Button>
-              </>
-            )}
-          </div>
+                  Interview Prep
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        </NavigationMenu>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden text-white"
-            onClick={handleMenuToggle}
-            onMouseEnter={() => playSound("hover")}
-          >
-            {isMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </button>
+        {/* User Menu or Auth Buttons */}
+        <div className="hidden md:flex items-center space-x-4">
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full" onClick={() => playSound("click")}>
+                  <Avatar>
+                    <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
+                    <AvatarFallback>{user.displayName?.charAt(0) || "U"}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="cursor-pointer" onClick={() => playSound("click")}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Link href="/login" passHref>
+                <Button variant="ghost" onClick={() => playSound("click")}>Log In</Button>
+              </Link>
+              <Link href="/signup" passHref>
+                <Button onClick={() => playSound("click")}>Sign Up</Button>
+              </Link>
+            </>
+          )}
         </div>
 
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden border-t border-gray-800 py-4"
-            >
-              <div className="flex flex-col space-y-4">
-                <Link
-                  href="/"
-                  className="text-gray-300 hover:text-white transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                  onMouseEnter={() => playSound("hover")}
-                >
-                  Home
-                </Link>
-                <Link
-                  href="/about"
-                  className="text-gray-300 hover:text-white transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                  onMouseEnter={() => playSound("hover")}
-                >
-                  About
-                </Link>
-                {isClient && user && (
-                  <Link
-                    href="/dashboard"
-                    className="text-gray-300 hover:text-white transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                    onMouseEnter={() => playSound("hover")}
-                  >
-                    Dashboard
-                  </Link>
-                )}
-
-                <div className="pt-4 border-t border-gray-800">
-                  {isClient ? (
-                    user ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                          <User className="w-5 h-5 text-gray-400" />
-                          <span className="text-white">{user.name}</span>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleLogout}
-                          onMouseEnter={() => playSound("hover")}
-                          className="w-full border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
-                        >
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Logout
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Button
-                          variant="ghost"
-                          asChild
-                          onMouseEnter={() => playSound("hover")}
-                          className="w-full text-gray-300 hover:text-white hover:bg-gray-800"
-                        >
-                          <Link href="/login">Login</Link>
-                        </Button>
-                        <Button
-                          asChild
-                          onMouseEnter={() => playSound("hover")}
-                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-                        >
-                          <Link href="/signup">Sign Up</Link>
-                        </Button>
-                      </div>
-                    )
-                  ) : (
-                    // Default state during SSR
-                    <div className="space-y-2">
-                      <Button
-                        variant="ghost"
-                        asChild
-                        className="w-full text-gray-300 hover:text-white hover:bg-gray-800"
-                      >
-                        <Link href="/login">Login</Link>
-                      </Button>
-                      <Button
-                        asChild
-                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-                      >
-                        <Link href="/signup">Sign Up</Link>
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Mobile Menu Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={() => {
+            setIsMenuOpen(!isMenuOpen);
+            playSound("click");
+          }}
+        >
+          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </Button>
       </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden bg-background/95 backdrop-blur-md border-b border-border/40"
+          >
+            <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
+              <Link href="/dashboard" className="px-4 py-2 hover:bg-accent rounded-md" onClick={() => playSound("click")}>
+                Dashboard
+              </Link>
+              <Link href="/community" className="px-4 py-2 hover:bg-accent rounded-md" onClick={() => playSound("click")}>
+                Community
+              </Link>
+              <Link href="/interview" className="px-4 py-2 hover:bg-accent rounded-md" onClick={() => playSound("click")}>
+                Interview Prep
+              </Link>
+              {user ? (
+                <>
+                  <Link href="/profile" className="px-4 py-2 hover:bg-accent rounded-md" onClick={() => playSound("click")}>
+                    Profile
+                  </Link>
+                  <Button onClick={handleLogout} variant="destructive" className="mt-2">
+                    Log Out
+                  </Button>
+                </>
+              ) : (
+                <div className="flex flex-col space-y-2 pt-2 border-t border-border/40">
+                  <Link href="/login" passHref>
+                    <Button variant="outline" className="w-full" onClick={() => playSound("click")}>
+                      Log In
+                    </Button>
+                  </Link>
+                  <Link href="/signup" passHref>
+                    <Button className="w-full" onClick={() => playSound("click")}>
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
+
+export default Header;
