@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json()
@@ -21,7 +23,7 @@ export async function POST(request: NextRequest) {
     const timeoutId = setTimeout(() => controller.abort(), 300000) // 5 minute timeout
 
     try {
-      const response = await fetch("http://localhost:8000/youtube-transcript", {
+      const response = await fetch(`${BACKEND_URL}/youtube-transcript`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

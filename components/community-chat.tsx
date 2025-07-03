@@ -29,7 +29,8 @@ export default function CommunityChat() {
 
   useEffect(() => {
     // Initialize Socket.IO connection
-    socketRef.current = io("http://51.21.252.8:5000", {
+    const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:5000"
+    socketRef.current = io(CHAT_URL, {
       transports: ["websocket", "polling"],
     })
 

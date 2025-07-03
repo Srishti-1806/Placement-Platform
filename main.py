@@ -563,7 +563,7 @@ async def proxy_chat():
     """Proxy to chat server"""
     try:
         import requests
-        response = requests.get("http://localhost:5000", timeout=5)
+        response = requests.get("http://51.21.252.8:5000", timeout=5)
         return HTMLResponse(content=response.text)
     except Exception as e:
         return HTMLResponse(content=f"""
