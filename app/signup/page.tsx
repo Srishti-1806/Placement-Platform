@@ -41,10 +41,14 @@ function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 <<<<<<< HEAD
+<<<<<<< HEAD
   const { signupGithub,signupGoogle, isLoading } = useAuth();
 =======
   const { signupGithub, signupGoogle, isLoading } = useAuth();
 >>>>>>> f34ebf639117f9a769deffd4db38e184e3656617
+=======
+  const { signup, signupGithub, signupGoogle, isLoading } = useAuth();
+>>>>>>> aea0d9134b5b874463b4c70eba600a09d686fb88
   const { playSound } = useSound();
   const router = useRouter();
   const searchParams = useSearchParams(); // This needs to be wrapped in Suspense
@@ -53,13 +57,14 @@ function SignupForm() {
     e.preventDefault();
     setError("");
     playSound("click");
-    // const provider = new GoogleAuthProvider();
-    // if (!name || !email || !password || !confirmPassword) {
-    //   setError("Please fill in all fields");
-    //   playSound("error");
-    //   return;
-    // }
+    // Form validation
+    if (!name || !email || !password || !confirmPassword) {
+      setError("Please fill in all fields");
+      playSound("error");
+      return;
+    }
 
+<<<<<<< HEAD
     // if (password !== confirmPassword) {
     //   setError("Passwords do not match");
     //   playSound("error");
@@ -75,19 +80,28 @@ function SignupForm() {
     const success = await signupGoogle();
     if(success){
 =======
+=======
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      playSound("error");
+      return;
+    }
+>>>>>>> aea0d9134b5b874463b4c70eba600a09d686fb88
 
-    // if (password.length < 6) {
-    //   setError("Password must be at least 6 characters");
-    //   playSound("error");
-    //   return;
-    // }
-    const success = await signupGoogle();
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      playSound("error");
+      return;
+    }
+
+    // Create account with email and password
+    const success = await signup(name, email, password);
     if (success) {
       playSound("success");
       const redirectTo = searchParams.get("redirect") || "/dashboard";
       router.push(redirectTo);
     } else {
-      setError("Failed to create account");
+      setError("Failed to create account. Email might already be in use.");
       playSound("error");
     }
   };
