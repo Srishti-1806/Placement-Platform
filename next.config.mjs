@@ -9,10 +9,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Remove the invalid experimental option
-  // experimental: {
-  //   missingSuspenseWithCSRBailout: false,
-  // },
   
   // For production builds
   output: 'standalone',
@@ -35,9 +31,12 @@ const nextConfig = {
     return config
   },
   
-  // Handle external modules
+  // FIXED: Changed from experimental.serverComponentsExternalPackages
+  serverExternalPackages: ['sharp', 'onnxruntime-node'],
+  
+  // Keep experimental section for other features if needed
   experimental: {
-    serverComponentsExternalPackages: ['sharp', 'onnxruntime-node'],
+    // Other experimental features can go here
   },
 }
 
