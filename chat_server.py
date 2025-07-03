@@ -89,7 +89,7 @@ def handle_message(msg):
 
 if __name__ == '__main__':
     print("🚀 Starting PlacementPro Chat Server...")
-    print("📡 Server will be available at: http://localhost:5000")
+    print("📡 Server will be available at: http://51.21.252.8:5000")
     print("💬 Chat functionality enabled")
     print("🔗 CORS enabled for all origins")
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)

@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -11,7 +13,7 @@ export async function GET(request: NextRequest) {
     const limit = Number.parseInt(searchParams.get("limit") || "20")
 
     // Call Python backend for job scraping
-    const response = await fetch("http://localhost:8000/api/jobs", {
+    const response = await fetch(`${BACKEND_URL}/api/jobs`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
