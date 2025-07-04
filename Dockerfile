@@ -85,7 +85,7 @@ autostart=true\n\
 autorestart=true\n\
 stderr_logfile=/app/logs/backend.err.log\n\
 stdout_logfile=/app/logs/backend.out.log\n\
-environment=PYTHONUNBUFFERED=1,IN_DOCKER=true,FRONTEND_URL="http://%(ENV_HOSTNAME)s:3000",CHAT_URL="http://%(ENV_HOSTNAME)s:5000",BACKEND_URL="http://%(ENV_HOSTNAME)s:8000"\n\
+environment=PYTHONUNBUFFERED=1,IN_DOCKER=true,FRONTEND_URL="http://%%(ENV_HOSTNAME)s:3000",CHAT_URL="http://%%(ENV_HOSTNAME)s:5000",BACKEND_URL="http://%%(ENV_HOSTNAME)s:8000"\n\
 \n\
 [program:chat]\n\
 command=/app/venv/bin/python chat_server.py\n\
