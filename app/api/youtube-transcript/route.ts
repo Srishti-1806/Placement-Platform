@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const timeoutId = setTimeout(() => controller.abort(), 300000) // 5 minute timeout
 
     try {
-      const response = await fetch(`${BACKEND_URL}/youtube-transcript`, {
+      const response = await fetch("/api/youtube-transcript", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

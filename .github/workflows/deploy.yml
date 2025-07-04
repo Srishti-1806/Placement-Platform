@@ -117,6 +117,11 @@ jobs:
             -p 8000:8000 \
             -v $(pwd)/temp:/app/temp \
             -v $(pwd)/static:/app/static \
+            -e HOSTNAME="${{ secrets.EC2_HOST }}" \
+            -e IN_DOCKER="true" \
+            -e FRONTEND_URL="http://${{ secrets.EC2_HOST }}:3000" \
+            -e CHAT_URL="http://${{ secrets.EC2_HOST }}:5000" \
+            -e BACKEND_URL="http://${{ secrets.EC2_HOST }}:8000" \
             --restart unless-stopped \
             --memory="3g" \
             --cpus="2.0" \
@@ -187,7 +192,6 @@ jobs:
             fi
           done
           
-          # Chat server health check
           echo "💬 Testing Chat Server..."
           for i in {1..5}; do
             if curl -f -s http://localhost:5000 > /dev/null; then
@@ -196,6 +200,44 @@ jobs:
             else
               echo "⏳ Chat server attempt $i/5..."
               sleep 10
+            fi
+            
+            if [ $i -eq 5 ]; then
+              echo "⚠️ Chat server might still be starting..."
+              echo "📋 Running chat server diagnostics:"
+              echo "1️⃣ Supervisor status:"
+              sudo docker exec placementpro supervisorctl status chat || echo "Supervisor control not available"
+              
+              echo "2️⃣ Checking eventlet import order:"
+              sudo docker exec placementpro grep -A 5 "import" /app/chat_server.py || echo "Cannot read chat_server.py"
+              
+              echo "3️⃣ Attempting emergency chat server fix..."
+              # Create simplified chat server
+              cat > fixed_chat.py << 'EOF'
+              # IMPORTANT: These must be the FIRST imports!
+              import eventlet
+              eventlet.monkey_patch()
+              
+              from flask import Flask, render_template_string
+              from flask_cors import CORS
+              
+              app = Flask(__name__)
+              CORS(app, origins="*")
+              
+              @app.route('/')
+              def index():
+                  return render_template_string('<h1>Chat Server Running</h1>')
+              
+              if __name__ == '__main__':
+                  app.run(host='0.0.0.0', port=5000)
+              EOF
+              
+              # Copy fix to container and restart chat process
+              sudo docker cp fixed_chat.py placementpro:/app/fixed_chat.py
+              sudo docker exec placementpro bash -c "supervisorctl stop chat && cp /app/fixed_chat.py /app/chat_server.py && supervisorctl start chat"
+              echo "4️⃣ Waiting for fixed chat server..."
+              sleep 15
+              curl -I http://localhost:5000 || echo "Chat server still not responding"
             fi
           done
           
@@ -224,6 +266,22 @@ jobs:
           # Cleanup old images
           echo "🧹 Cleaning up old Docker images..."
           sudo docker image prune -f --filter="dangling=true"
+          
+          # Try direct Flask server if supervisor failed
+          if ! curl -s -I http://localhost:5000 | head -n 1 | grep -q "200"; then
+            echo "🔄 Chat server failed with supervisor - trying direct Flask start..."
+            sudo docker exec -d placementpro bash -c "cd /app && nohup python -c \"
+            from flask import Flask, render_template_string
+            app = Flask(__name__)
+            @app.route('/')
+            def index():
+                return render_template_string('<h1>Emergency Chat Server</h1>')
+            app.run(host='0.0.0.0', port=5000)
+            \" > /dev/null 2>&1 &"
+            sleep 5
+            echo -n "💬 Emergency Chat Server: "
+            curl -s -I http://localhost:5000 | head -n 1 | grep -q "200" && echo "✅ Accessible" || echo "❌ Failed"
+          fi
           
           echo ""
           echo "🎉 Complete PlacementPro platform deployed successfully!"

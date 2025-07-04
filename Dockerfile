@@ -38,12 +38,20 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Create a non-root user for security
+RUN useradd -ms /bin/bash appuser
+
 # Install pnpm globally
 RUN npm install -g pnpm
 
-# Copy and install Python dependencies with break-system-packages
+# Set up Python virtual environment for isolation
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
+
+# Copy and install Python dependencies in venv
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+RUN /app/venv/bin/pip install --no-cache-dir -r requirements.txt && \
+    apt-get remove -y build-essential python3-dev && apt-get autoremove -y
 
 # Copy backend source
 COPY main.py chat_server.py ./
@@ -59,30 +67,33 @@ COPY --from=frontend-builder /app/package.json ./
 COPY next.config.mjs* ./
 
 # Create directories
-RUN mkdir -p static temp static/reports static/summaries static/transcripts
+RUN mkdir -p static temp static/reports static/summaries static/transcripts /app/logs
+
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
 
 # Create supervisor configuration
 RUN printf '[supervisord]\n\
 nodaemon=true\n\
-user=root\n\
+user=appuser\n\
 loglevel=info\n\
 \n\
 [program:backend]\n\
-command=python3 main.py\n\
+command=/app/venv/bin/python main.py\n\
 directory=/app\n\
 autostart=true\n\
 autorestart=true\n\
-stderr_logfile=/var/log/backend.err.log\n\
-stdout_logfile=/var/log/backend.out.log\n\
-environment=PYTHONUNBUFFERED=1\n\
+stderr_logfile=/app/logs/backend.err.log\n\
+stdout_logfile=/app/logs/backend.out.log\n\
+environment=PYTHONUNBUFFERED=1,IN_DOCKER=true,FRONTEND_URL="http://%(ENV_HOSTNAME)s:3000",CHAT_URL="http://%(ENV_HOSTNAME)s:5000",BACKEND_URL="http://%(ENV_HOSTNAME)s:8000"\n\
 \n\
 [program:chat]\n\
-command=python3 chat_server.py\n\
+command=/app/venv/bin/python chat_server.py\n\
 directory=/app\n\
 autostart=true\n\
 autorestart=true\n\
-stderr_logfile=/var/log/chat.err.log\n\
-stdout_logfile=/var/log/chat.out.log\n\
+stderr_logfile=/app/logs/chat.err.log\n\
+stdout_logfile=/app/logs/chat.out.log\n\
 environment=PYTHONUNBUFFERED=1\n\
 \n\
 [program:frontend]\n\
@@ -90,19 +101,28 @@ command=pnpm start\n\
 directory=/app\n\
 autostart=true\n\
 autorestart=true\n\
-stderr_logfile=/var/log/frontend.err.log\n\
-stdout_logfile=/var/log/frontend.out.log\n\
-' > /etc/supervisor/conf.d/supervisord.conf
+stderr_logfile=/app/logs/frontend.err.log\n\
+stdout_logfile=/app/logs/frontend.out.log\n\
+environment=NEXT_PUBLIC_BACKEND_URL="http://${HOSTNAME:-localhost}:8000",NEXT_PUBLIC_CHAT_URL="http://${HOSTNAME:-localhost}:5000"' > /etc/supervisor/conf.d/supervisord.conf
 
 # Expose ports
 EXPOSE 3000 5000 8000
 
 # Health check
 RUN printf '#!/bin/bash\n\
-curl -f http://localhost:8000/api/health --max-time 10 --connect-timeout 5 || exit 1\n\
-' > /healthcheck.sh && chmod +x /healthcheck.sh
+curl -f http://localhost:8000/api/health --max-time 10 --connect-timeout 5 || exit 1\n' > /healthcheck.sh && chmod +x /healthcheck.sh
 
 HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=3 CMD ["/healthcheck.sh"]
+
+# Switch to non-root user
+USER appuser
+
+# Create supervisor log directories and set permissions
+RUN mkdir -p /app/logs && \
+    touch /app/logs/backend.out.log /app/logs/backend.err.log \
+          /app/logs/chat.out.log /app/logs/chat.err.log \
+          /app/logs/frontend.out.log /app/logs/frontend.err.log && \
+    chmod -R 777 /app/logs
 
 # Start all services with supervisor
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

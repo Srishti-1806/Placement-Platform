@@ -39,7 +39,7 @@ import {
   ArrowUp,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState(0);
@@ -334,6 +334,40 @@ export default function Home() {
     },
   ];
 
+  // --- FIX: Generate random positions only on client ---
+  const [orbs, setOrbs] = useState<{
+    left: number;
+    top: number;
+    x: number;
+    y: number;
+    duration: number;
+  }[]>([]);
+  const [patterns, setPatterns] = useState<{
+    left: number;
+    top: number;
+    duration: number;
+  }[]>([]);
+
+  useEffect(() => {
+    setOrbs(
+      Array.from({ length: 15 }).map(() => ({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        x: Math.random() * 400 - 200,
+        y: Math.random() * 300 - 150,
+        duration: 20 + Math.random() * 15,
+      }))
+    );
+    setPatterns(
+      Array.from({ length: 30 }).map(() => ({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        duration: 30 + Math.random() * 20,
+      }))
+    );
+  }, []);
+  // --- END FIX ---
+
   return (
     <main className="min-h-screen relative overflow-hidden">
       {/* Ultra-Vibrant Magenta Background */}
@@ -344,18 +378,18 @@ export default function Home() {
       {/* Dynamic Floating Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Large Magenta Orbs */}
-        {Array.from({ length: 15 }).map((_, i) => (
+        {orbs.map((orb, i) => (
           <motion.div
             key={i}
             animate={{
               scale: [1, 1.8, 1],
               rotate: [0, 360],
               opacity: [0.1, 0.7, 0.1],
-              x: [0, Math.random() * 400 - 200],
-              y: [0, Math.random() * 300 - 150],
+              x: [0, orb.x],
+              y: [0, orb.y],
             }}
             transition={{
-              duration: 20 + Math.random() * 15,
+              duration: orb.duration,
               repeat: Infinity,
               ease: "easeInOut",
               delay: i * 1.5,
@@ -371,14 +405,14 @@ export default function Home() {
               ][i % 6]
             }`}
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${orb.left}%`,
+              top: `${orb.top}%`,
             }}
           />
         ))}
 
         {/* Geometric Patterns */}
-        {Array.from({ length: 30 }).map((_, i) => (
+        {patterns.map((pattern, i) => (
           <motion.div
             key={`pattern-${i}`}
             animate={{
@@ -387,15 +421,15 @@ export default function Home() {
               opacity: [0.1, 0.5, 0.1],
             }}
             transition={{
-              duration: 30 + Math.random() * 20,
+              duration: pattern.duration,
               repeat: Infinity,
               ease: "linear",
               delay: i * 1.2,
             }}
             className="absolute w-8 h-8 bg-gradient-to-r from-magenta-400/15 to-pink-500/15 transform rotate-45"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${pattern.left}%`,
+              top: `${pattern.top}%`,
             }}
           />
         ))}
