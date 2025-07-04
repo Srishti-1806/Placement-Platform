@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,14 +22,12 @@ export default function CommunityChat() {
   const [newMessage, setNewMessage] = useState("")
   const [onlineUsers, setOnlineUsers] = useState(0)
   const socketRef = useRef<Socket | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null) // Add this line
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
     // Get URL from environment or use default localhost
     const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:5000"
-    console.log("Connecting to chat server at:", CHAT_URL)
-
     // Connect to the chat server with explicit config
     const socket = io(CHAT_URL, {
       transports: ["websocket", "polling"],
@@ -43,21 +39,19 @@ export default function CommunityChat() {
     })
 
     socket.on("connect", () => {
-      console.log("🟢 Connected to chat server")
       setIsConnected(true)
     })
 
     socket.on("disconnect", () => {
-      console.log("🔴 Disconnected from chat server")
       setIsConnected(false)
     })
 
-    socket.on("message", (msg: string) => {
+    socket.on("message", (msg: { text: string; user?: string; timestamp?: string }) => {
       const newMsg: Message = {
         id: Date.now().toString(),
-        text: msg,
-        timestamp: new Date(),
-        user: "Anonymous",
+        text: typeof msg === "string" ? msg : msg.text,
+        timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+        user: msg.user || "Anonymous",
       }
       setMessages((prev) => [...prev, newMsg])
     })
@@ -84,7 +78,7 @@ export default function CommunityChat() {
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       sendMessage()
     }
@@ -180,7 +174,7 @@ export default function CommunityChat() {
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
+                    onKeyDown={handleKeyPress}
                     placeholder={isConnected ? "Type a message..." : "Chat offline"}
                     disabled={!isConnected}
                     className="flex-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"
