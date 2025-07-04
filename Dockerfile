@@ -110,7 +110,12 @@ EXPOSE 3000 5000 8000
 
 # Health check
 RUN printf '#!/bin/bash\n\
-curl -f http://localhost:8000/api/health --max-time 10 --connect-timeout 5 || exit 1\n' > /healthcheck.sh && chmod +x /healthcheck.sh
+for i in {1..3}; do\n\
+  curl -sf http://localhost:8000/api/health > /dev/null && exit 0\n\
+  echo "Attempt $i: Health check failed, retrying..."\n\
+  sleep 5\n\
+done\n\
+exit 1\n' > /healthcheck.sh && chmod +x /healthcheck.sh
 
 HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=3 CMD ["/healthcheck.sh"]
 
