@@ -22,29 +22,37 @@ export default function CommunityChat() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
-  const [isConnected, setIsConnected] = useState(false)
   const [onlineUsers, setOnlineUsers] = useState(0)
   const socketRef = useRef<Socket | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null) // Add this line
+  const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
-    // Initialize Socket.IO connection
+    // Get URL from environment or use default localhost
     const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:5000"
-    socketRef.current = io(CHAT_URL, {
+    console.log("Connecting to chat server at:", CHAT_URL)
+
+    // Connect to the chat server with explicit config
+    const socket = io(CHAT_URL, {
       transports: ["websocket", "polling"],
+      withCredentials: false,
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     })
 
-    socketRef.current.on("connect", () => {
-      setIsConnected(true)
+    socket.on("connect", () => {
       console.log("🟢 Connected to chat server")
+      setIsConnected(true)
     })
 
-    socketRef.current.on("disconnect", () => {
-      setIsConnected(false)
+    socket.on("disconnect", () => {
       console.log("🔴 Disconnected from chat server")
+      setIsConnected(false)
     })
 
-    socketRef.current.on("message", (msg: string) => {
+    socket.on("message", (msg: string) => {
       const newMsg: Message = {
         id: Date.now().toString(),
         text: msg,
@@ -54,14 +62,14 @@ export default function CommunityChat() {
       setMessages((prev) => [...prev, newMsg])
     })
 
-    socketRef.current.on("user_count", (count: number) => {
+    socket.on("user_count", (count: number) => {
       setOnlineUsers(count)
     })
 
+    socketRef.current = socket
+
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect()
-      }
+      socket.disconnect()
     }
   }, [])
 

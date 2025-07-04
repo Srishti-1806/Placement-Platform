@@ -1,13 +1,20 @@
+# IMPORTANT: These must be the first imports!
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, render_template_string, request
 from flask_socketio import SocketIO, send, emit
 from flask_cors import CORS
 import time
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'placement_pro_secret_2024!'
-# Allow requests from your domain
-CORS(app, origins=["http://51.21.252.8", "http://51.21.252.8:3000", "http://localhost:3000"])
-socketio = SocketIO(app, cors_allowed_origins=["http://51.21.252.8", "http://51.21.252.8:3000", "http://localhost:3000"], async_mode='threading')
+
+# Allow frontend origin for CORS (this is important for production)
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+CORS(app, origins=[FRONTEND_URL, "*"])  # Allow both specific origin and any origin during dev
+socketio = SocketIO(app, cors_allowed_origins=[FRONTEND_URL, "*"], async_mode='eventlet')
 
 # Store connected users
 connected_users = set()
@@ -88,8 +95,8 @@ def handle_message(msg):
     send(formatted_msg, broadcast=True)
 
 if __name__ == '__main__':
-    print("🚀 Starting PlacementPro Chat Server...")
-    print("📡 Server will be available at: http://51.21.252.8:5000")
-    print("💬 Chat functionality enabled")
-    print("🔗 CORS enabled for all origins")
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    print("Starting PlacementPro Chat Server...")
+    print(f"Server will be available at: http://localhost:5000")
+    print("Chat functionality enabled")
+    print("CORS enabled for all origins")
+    socketio.run(app, host='0.0.0.0', port=5000, debug=False)  # Set debug=False for production

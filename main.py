@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile
+from fastapi import FastAPI, HTTPException, File, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
@@ -12,6 +12,12 @@ import subprocess
 import asyncio
 import threading
 import time
+import sys
+
+# Dynamic URLs from environment or defaults
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+CHAT_URL = os.getenv("CHAT_URL", "http://localhost:5000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 # Create directories first
 os.makedirs("temp", exist_ok=True)
@@ -27,118 +33,99 @@ generate_feedback = None
 generate_pdf_report = None
 record_from_webcam = None
 
-# Load utilities safely
 try:
     from utils.transcriber import transcribe_audio
-    print("✅ Transcriber loaded")
+    print("Transcriber loaded")
 except Exception as e:
-    print(f"❌ Transcriber failed: {e}")
+    print(f"Transcriber failed: {e}")
 
 try:
     from utils.body_language import analyze_body_language
-    print("✅ Body language analyzer loaded")
+    print("Body language analyzer loaded")
 except Exception as e:
-    print(f"❌ Body language analyzer failed: {e}")
+    print(f"Body language analyzer failed: {e}")
 
 try:
     from utils.speech_analysis import analyze_speech
-    print("✅ Speech analyzer loaded")
+    print("Speech analyzer loaded")
 except Exception as e:
-    print(f"❌ Speech analyzer failed: {e}")
+    print(f"Speech analyzer failed: {e}")
 
 try:
     from utils.feedback_generator import generate_feedback
-    print("✅ Feedback generator loaded")
+    print("Feedback generator loaded")
 except Exception as e:
-    print(f"❌ Feedback generator failed: {e}")
+    print(f"Feedback generator failed: {e}")
 
 try:
     from utils.report_generator import generate_pdf_report
-    print("✅ Report generator loaded")
+    print("Report generator loaded")
 except Exception as e:
-    print(f"❌ Report generator failed: {e}")
+    print(f"Report generator failed: {e}")
 
 try:
     from webcam_recorder import record_from_webcam
-    print("✅ Webcam recorder loaded")
+    print("Webcam recorder loaded")
 except Exception as e:
-    print(f"❌ Webcam recorder failed: {e}")
+    print(f"Webcam recorder failed: {e}")
 
 try:
     from utils.ats_calculator import ATSCalculator
     ats_calculator = ATSCalculator()
-    print("✅ ATS Calculator loaded")
+    print("ATS Calculator loaded")
 except Exception as e:
-    print(f"❌ ATS Calculator failed: {e}")
+    print(f"ATS Calculator failed: {e}")
     ats_calculator = None
 
 try:
     from utils.job_scraper import JobScraper
     job_scraper = JobScraper()
-    print("✅ Job Scraper loaded")
+    print("Job Scraper loaded")
 except Exception as e:
-    print(f"❌ Job Scraper failed: {e}")
+    print(f"Job Scraper failed: {e}")
     job_scraper = None
 
 try:
     from utils.pdf_summarizer import PDFSummarizer
     pdf_summarizer = PDFSummarizer()
-    print("✅ PDF Summarizer loaded")
+    print("PDF Summarizer loaded")
 except Exception as e:
-    print(f"❌ PDF Summarizer failed: {e}")
+    print(f"PDF Summarizer failed: {e}")
     pdf_summarizer = None
 
 try:
     from utils.youtube_converter import YouTubeConverter
     youtube_converter = YouTubeConverter()
-    print("✅ YouTube Converter loaded")
+    print("YouTube Converter loaded")
 except Exception as e:
-    print(f"❌ YouTube Converter failed: {e}")
+    print(f"YouTube Converter failed: {e}")
     youtube_converter = None
 
-# Create FastAPI app (ONLY ONCE!)
-print("🔍 Creating FastAPI app...")
+# Create FastAPI app
+print("Creating FastAPI app...")
 app = FastAPI(title="PlacementPro API", version="1.0.0")
-print("✅ FastAPI app created successfully")
+print("FastAPI app created successfully")
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Add CORS middleware
+# Add CORS middleware (restrict for production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for testing
+    allow_origins=[FRONTEND_URL],  # Only allow your frontend domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Function to start Next.js (add this after your app creation)
-async def start_nextjs_if_available():
-    """Start Next.js frontend if package.json exists"""
-    if os.path.exists("package.json"):
-        try:
-            # Start Next.js in background
-            process = subprocess.Popen(
-                ["npm", "run", "start"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
-            print("✅ Next.js frontend started successfully")
-            return process
-        except Exception as e:
-            print(f"❌ Next.js start failed: {e}")
-            return None
-    return None
-
-# Mount Next.js static files if they exist (add after your static mount)
+# Mount Next.js static files if they exist
 if os.path.exists(".next/static"):
     app.mount("/_next", StaticFiles(directory=".next"), name="nextjs")
-    print("✅ Next.js static files mounted")
+    print("Next.js static files mounted")
 
 if os.path.exists("public"):
     app.mount("/public", StaticFiles(directory="public"), name="public")
-    print("✅ Public files mounted")
+    print("Public files mounted")
 
 # Pydantic models
 class ATSRequest(BaseModel):
@@ -165,163 +152,125 @@ class AnalysisResult(BaseModel):
     feedback: str
     pdf_url: str
 
-
-# Add this function after your app creation
 def start_nextjs_server():
     """Start Next.js server in a separate thread"""
     if os.path.exists("package.json"):
         try:
-            print("🎨 Starting Next.js server...")
-            # Start Next.js server
+            print("Starting Next.js server...")
+            npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
+            cwd = os.path.abspath(os.path.dirname(__file__))
             process = subprocess.Popen(
-                ["npm", "start"], 
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.PIPE,
-                cwd="/app"
+                [npm_cmd, "start"],
+                cwd=cwd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
             )
-            print("✅ Next.js server started on port 3000")
+            print("Next.js server started on port 3000")
             return process
         except Exception as e:
-            print(f"❌ Failed to start Next.js: {e}")
+            print(f"Failed to start Next.js: {e}")
             return None
     return None
 
-
-# Fix the chat server startup function
 def start_chat_server():
     """Start chat server in a separate thread"""
     try:
-        print("💬 Starting chat server...")
-        # Use the virtual environment Python
+        print("Starting chat server...")
+        python_exec = sys.executable if os.name == "nt" else "/app/chat_venv/bin/python"
         process = subprocess.Popen(
-            ["/app/chat_venv/bin/python", "chat_server.py"],
+            [python_exec, "chat_server.py"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env={**os.environ, "PORT": "5000", "HOST": "0.0.0.0"}
         )
-        
-        # Wait briefly to check if process started successfully
         time.sleep(2)
         if process.poll() is None:
-            print("✅ Chat server started on port 5000")
+            print("Chat server started on port 5000")
             return process
         else:
             stdout, stderr = process.communicate()
-            print(f"❌ Chat server failed to start: {stderr.decode()}")
+            print(f"Chat server failed to start: {stderr.decode(errors='ignore')}")
             return None
     except Exception as e:
-        print(f"❌ Failed to start chat server: {e}")
+        print(f"Failed to start chat server: {e}")
         return None
 
-# Routes
-@app.get("/")
-async def serve_frontend():
-    # Try to serve Next.js build
-    if os.path.exists("static/frontend/server/pages/index.html"):
-        return FileResponse("static/frontend/server/pages/index.html")
-    elif os.path.exists(".next/server/pages/index.html"):
-        return FileResponse(".next/server/pages/index.html")
-    else:
-        # Improved fallback response with auto-redirect and better UI
-        return HTMLResponse("""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>PlacementPro</title>
-            <meta http-equiv="refresh" content="5;url=http://51.21.252.8:3000">
-            <style>
-                body { 
-                    font-family: Arial, sans-serif; 
-                    text-align: center; 
-                    padding: 50px; 
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    margin: 0;
-                }
-                .container { 
-                    max-width: 600px; 
-                    margin: 0 auto; 
-                    background: rgba(255,255,255,0.1);
-                    backdrop-filter: blur(10px);
-                    padding: 30px; 
-                    border-radius: 10px; 
-                }
-                .status { color: #4CAF50; font-weight: bold; }
-                .error { color: #f44336; }
-                a { 
-                    color: #2196F3; 
-                    text-decoration: none;
-                    background: rgba(255,255,255,0.2);
-                    padding: 8px 15px;
-                    border-radius: 20px;
-                    margin: 5px;
-                    display: inline-block;
-                }
-                .loader {
-                    border: 5px solid rgba(255,255,255,0.3);
-                    border-radius: 50%;
-                    border-top: 5px solid white;
-                    width: 40px;
-                    height: 40px;
-                    animation: spin 1s linear infinite;
-                    margin: 20px auto;
-                }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            </style>
-            <script>
-                // Check if frontend is available
-                function checkFrontend() {
-                    fetch('http://51.21.252.8:3000', {mode: 'no-cors'})
-                        .then(() => {
-                            window.location.href = 'http://51.21.252.8:3000';
-                        })
-                        .catch(err => {
-                            console.log('Frontend not ready yet:', err);
-                            setTimeout(checkFrontend, 2000);
-                        });
-                }
-                
-                // Check if chat server is available
-                function checkChatServer() {
-                    fetch('http://51.21.252.8:5000', {mode: 'no-cors'})
-                        .then(() => {
-                            document.getElementById('chat-status').innerHTML = '✅ Chat Server: Online';
-                        })
-                        .catch(err => {
-                            console.log('Chat server not ready yet:', err);
-                            setTimeout(checkChatServer, 2000);
-                        });
-                }
-                
-                // Start checking when page loads
-                window.onload = function() {
-                    checkFrontend();
-                    checkChatServer();
-                };
-            </script>
-        </head>
-        <body>
-            <div class="container">
-                <h1>🚀 PlacementPro</h1>
-                <p>Your AI-Powered Career Assistant Platform</p>
-                <div class="loader"></div>
-                <p class="status">✅ Backend API is running successfully!</p>
-                <p class="error">⏳ Redirecting to frontend...</p>
-                <p id="chat-status">⏳ Checking Chat Server...</p>
-                <div style="margin: 20px 0;">
-                    <a href="http://51.21.252.8:3000">🎨 Frontend</a>
-                    <a href="/api/health">🏥 Health Check</a>
-                    <a href="/docs">📖 API Documentation</a>
-                    <a href="http://51.21.252.8:5000">💬 Chat Server</a>
+@app.get("/", response_class=HTMLResponse)
+async def serve_homepage():
+    """Serve Next.js frontend or fallback page"""
+    try:
+        frontend_path = Path(".next/server/pages/index.html")
+        if frontend_path.exists():
+            with open(frontend_path, "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
+        else:
+            # Fallback to a landing page that redirects to frontend port
+            return HTMLResponse(content=f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>PlacementPro - Loading...</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }}
+                    .container {{ max-width: 800px; margin: 0 auto; padding: 40px; background: rgba(255,255,255,0.1); border-radius: 15px; backdrop-filter: blur(10px); }}
+                    .loading {{ animation: pulse 2s infinite; }}
+                    @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} }}
+                    .status {{ margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; }}
+                    .success {{ color: #10b981; }}
+                    .error {{ color: #ef4444; }}
+                    a {{ color: #67e8f9; text-decoration: none; margin: 0 10px; }}
+                </style>
+                <script>
+                    let attempts = 0;
+                    const maxAttempts = 20;
+                    function checkFrontend() {{
+                        attempts++;
+                        fetch('{FRONTEND_URL}')
+                            .then(response => {{
+                                if (response.ok) {{
+                                    window.location.href = '{FRONTEND_URL}';
+                                }} else {{
+                                    throw new Error('Frontend not ready');
+                                }}
+                            }})
+                            .catch(error => {{
+                                if (attempts < maxAttempts) {{
+                                    document.getElementById('status').innerHTML = 
+                                        `<div class="loading">🔄 Loading frontend... (Attempt ${{attempts}}/${{maxAttempts}})</div>`;
+                                    setTimeout(checkFrontend, 3000);
+                                }} else {{
+                                    document.getElementById('status').innerHTML = 
+                                        `<div class="error">❌ Frontend failed to load. <a href='{FRONTEND_URL}'>Try directly</a></div>`;
+                                }}
+                            }});
+                    }}
+                    setTimeout(checkFrontend, 5000);
+                </script>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>PlacementPro</h1>
+                    <h2>Your AI-Powered Career Assistant Platform</h2>
+                    <div id="status" class="status loading">
+                        ⏳ Starting all services...
+                    </div>
+                    <div class="status">
+                        <div class="success">Backend API: Running</div>
+                        <div>Frontend: Loading...</div>
+                        <div>Chat Server: Starting...</div>
+                    </div>
+                    <div>
+                        <a href="{FRONTEND_URL}">Frontend</a>
+                        <a href="{BACKEND_URL}/docs">API Docs</a>
+                        <a href="{CHAT_URL}">Chat</a>
+                        <a href="{BACKEND_URL}/api/health">Health Check</a>
+                    </div>
                 </div>
-                <p><small>Backend: Port 8000 | Frontend: Port 3000 | Chat: Port 5000</small></p>
-            </div>
-        </body>
-        </html>
-        """)
+            </body>
+            </html>
+            """)
+    except Exception as e:
+        return {"message": "PlacementPro API is running successfully!", "error": str(e)}
 
 @app.get("/api/health")
 async def health_check():
@@ -335,290 +284,77 @@ async def health_check():
         }
     }
 
-@app.post("/api/ats-calculator")
-async def calculate_ats_score(request: ATSRequest):
-    if not ats_calculator:
-        raise HTTPException(status_code=503, detail="ATS Calculator service not available")
-    
-    try:
-        result = ats_calculator.calculate_ats_score(
-            request.resume_text,
-            request.job_description
-        )
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"ATS calculation failed: {str(e)}")
-
-@app.post("/api/jobs")
-async def search_jobs(request: JobSearchRequest):
-    if not job_scraper:
-        raise HTTPException(status_code=503, detail="Job Scraper service not available")
-    
-    try:
-        # Use the correct method name
-        jobs = job_scraper.scrape_naukri_jobs(
-            keyword=request.keyword,
-            location=request.location,
-            pages=2
-        )
-        
-        start_idx = (request.page - 1) * request.limit
-        end_idx = start_idx + request.limit
-        paginated_jobs = jobs[start_idx:end_idx]
-        
-        return {
-            "jobs": paginated_jobs,
-            "total": len(jobs),
-            "page": request.page,
-            "limit": request.limit,
-            "total_pages": (len(jobs) + request.limit - 1) // request.limit
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Job search failed: {str(e)}")
-
-@app.post("/api/summarize-pdf")
-async def summarize_pdf(file: UploadFile = File(...)):
-    if not pdf_summarizer:
-        raise HTTPException(status_code=503, detail="PDF Summarizer service not available")
-    
-    try:
-        file_location = f"temp/{file.filename}"
-        with open(file_location, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-            
-        result = pdf_summarizer.summarize_pdf(file_location)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PDF summarization failed: {str(e)}")
-
-@app.post("/api/youtube-transcript")
-async def convert_youtube(request: YouTubeRequest):
-    if not youtube_converter:
-        raise HTTPException(status_code=503, detail="YouTube Converter service not available")
-    try:
-        result = youtube_converter.youtube_to_transcript(request.url)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"YouTube conversion failed: {str(e)}")
-
-@app.post("/analyze", response_model=AnalysisResult)
-async def analyze_video(file: UploadFile = File(...)):
-    if not all([transcribe_audio, analyze_speech, analyze_body_language, generate_feedback, generate_pdf_report]):
-        raise HTTPException(status_code=503, detail="Video analysis services not fully available")
-    
-    try:
-        filename = Path(file.filename).name
-        file_path = f"temp/{filename}"
-        with open(file_path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
-
-        transcript = transcribe_audio(file_path)
-        speech_score = analyze_speech(file_path)
-        body_language_score = analyze_body_language(file_path)
-        feedback = generate_feedback(transcript, speech_score, body_language_score)
-
-        pdf_filename = filename.replace(".mp4", "_report.pdf")
-        pdf_path = f"static/reports/{pdf_filename}"
-        generate_pdf_report(transcript, speech_score, body_language_score, feedback, pdf_path)
-
-        return AnalysisResult(
-            transcript=transcript,
-            speech_score=speech_score,
-            body_language_score=body_language_score,
-            total_score=speech_score + body_language_score,
-            feedback=feedback,
-            pdf_url=f"/static/reports/{pdf_filename}"
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Video analysis failed: {str(e)}")
-
-@app.get("/record-webcam", response_model=AnalysisResult)
-def record_and_analyze():
-    if not record_from_webcam:
-        raise HTTPException(status_code=503, detail="Webcam recording not available")
-    
-    try:
-        video_path = "temp/webcam_recording.mp4"
-        record_from_webcam(video_path)
-
-        transcript = transcribe_audio(video_path)
-        speech_score = analyze_speech(video_path)
-        body_language_score = analyze_body_language(video_path)
-        feedback = generate_feedback(transcript, speech_score, body_language_score)
-
-        pdf_filename = "webcam_recording_report.pdf"
-        pdf_path = f"static/reports/{pdf_filename}"
-        generate_pdf_report(transcript, speech_score, body_language_score, feedback, pdf_path)
-
-        return AnalysisResult(
-            transcript=transcript,
-            speech_score=speech_score,
-            body_language_score=body_language_score,
-            total_score=speech_score + body_language_score,
-            feedback=feedback,
-            pdf_url=f"/static/reports/{pdf_filename}"
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Webcam recording failed: {str(e)}")
-
-# Serve frontend at root
-@app.get("/", response_class=HTMLResponse)
-async def serve_homepage():
-    """Serve Next.js frontend"""
-    try:
-        # Try to serve from Next.js build
-        frontend_path = Path(".next/server/pages/index.html")
-        if frontend_path.exists():
-            with open(frontend_path, "r") as f:
-                return HTMLResponse(content=f.read())
-        else:
-            # Fallback to a landing page that redirects to frontend port
-            return HTMLResponse(content=f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>PlacementPro - Loading...</title>
-                <style>
-                    body {{ 
-                        font-family: Arial, sans-serif; 
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                        color: white; 
-                        text-align: center; 
-                        padding: 50px; 
-                        margin: 0;
-                    }}
-                    .container {{ 
-                        max-width: 800px; 
-                        margin: 0 auto; 
-                        padding: 40px; 
-                        background: rgba(255,255,255,0.1); 
-                        border-radius: 15px; 
-                        backdrop-filter: blur(10px);
-                    }}
-                    .loading {{ animation: pulse 2s infinite; }}
-                    @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} }}
-                    .status {{ margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; }}
-                    .success {{ color: #10b981; }}
-                    .error {{ color: #ef4444; }}
-                    a {{ color: #67e8f9; text-decoration: none; margin: 0 10px; }}
-                </style>
-                <script>
-                    let attempts = 0;
-                    const maxAttempts = 20;
-                    
-                    function checkFrontend() {{
-                        attempts++;
-                        fetch('http://51.21.252.8:3000')
-                            .then(response => {{
-                                if (response.ok) {{
-                                    window.location.href = 'http://51.21.252.8:3000';
-                                }} else {{
-                                    throw new Error('Frontend not ready');
-                                }}
-                            }})
-                            .catch(error => {{
-                                if (attempts < maxAttempts) {{
-                                    document.getElementById('status').innerHTML = 
-                                        `<div class="loading">🔄 Loading frontend... (Attempt ${{attempts}}/${{maxAttempts}})</div>`;
-                                    setTimeout(checkFrontend, 3000);
-                                }} else {{
-                                    document.getElementById('status').innerHTML = 
-                                        `<div class="error">❌ Frontend failed to load. <a href="http://51.21.252.8:3000">Try directly</a></div>`;
-                                }}
-                            }});
-                    }}
-                    
-                    // Start checking after 5 seconds
-                    setTimeout(checkFrontend, 5000);
-                </script>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>🚀 PlacementPro</h1>
-                    <h2>Your AI-Powered Career Assistant Platform</h2>
-                    <div id="status" class="status loading">
-                        ⏳ Starting all services...
-                    </div>
-                    <div class="status">
-                        <div class="success">✅ Backend API: Running</div>
-                        <div>🎨 Frontend: Loading...</div>
-                        <div>💬 Chat Server: Starting...</div>
-                    </div>
-                    <div>
-                        <a href="http://51.21.252.8:3000">🎨 Frontend</a>
-                        <a href="http://51.21.252.8:8000/docs">📖 API Docs</a>
-                        <a href="http://51.21.252.8:5000">💬 Chat</a>
-                        <a href="http://51.21.252.8:8000/api/health">🏥 Health Check</a>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """)
-    except Exception as e:
-        return {"message": "PlacementPro API is running successfully! 🚀", "error": str(e)}
-
-# Add chat proxy route
 @app.get("/chat", response_class=HTMLResponse)
 async def proxy_chat():
     """Proxy to chat server"""
     try:
         import requests
-        response = requests.get("http://51.21.252.8:5000", timeout=5)
+        response = requests.get(CHAT_URL, timeout=5)
         return HTMLResponse(content=response.text)
     except Exception as e:
         return HTMLResponse(content=f"""
         <html>
             <body style="font-family: Arial; text-align: center; padding: 50px;">
-                <h1>💬 Chat Server Starting...</h1>
+                <h1>Chat Server Starting...</h1>
                 <p>The chat server is initializing. Please wait...</p>
-                <p><a href="http://51.21.252.8:5000">Direct Chat Link</a></p>
+                <p><a href="{CHAT_URL}">Direct Chat Link</a></p>
                 <script>setTimeout(() => window.location.reload(), 5000);</script>
             </body>
         </html>
         """)
 
-# Catch-all for Next.js routing (add at the end, before the if __name__ == "__main__": block)
+
+
+@app.post("/api/youtube-transcript")
+async def youtube_transcript(request: Request):
+    try:
+        data = await request.json()
+        url = data.get("url")
+        print(f"Received YouTube URL: {url}")
+        if not url:
+            print("Missing YouTube URL in request")
+            raise HTTPException(status_code=400, detail="Missing YouTube URL")
+        if not youtube_converter:
+            print("YouTube converter not available")
+            raise HTTPException(status_code=500, detail="YouTube converter not available")
+        result = youtube_converter.get_transcript(url)
+        print(f"Transcription result: {result}")
+        return result
+    except Exception as e:
+        print(f"Error in /youtube-transcript: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
 @app.get("/{path:path}")
 async def catch_all(path: str):
     # Don't interfere with API routes
     if path.startswith("api/") or path.startswith("static/") or path.startswith("_next/"):
         raise HTTPException(status_code=404, detail="Not found")
-    
-    # Try to serve Next.js page
     next_file = f".next/server/pages/{path}.html"
     if os.path.exists(next_file):
         return FileResponse(next_file)
-    
-    # Fallback to index
     if os.path.exists(".next/server/pages/index.html"):
         return FileResponse(".next/server/pages/index.html")
-    
     raise HTTPException(status_code=404, detail="Page not found")
 
-# Update your startup (REPLACE the if __name__ == "__main__": block)
 if __name__ == "__main__":
-    print("🚀 Starting PlacementPro...")
+    print("Starting PlacementPro...")
     
-    # Start chat server and track the process
-    chat_process = start_chat_server()
+    # Only start these processes if not running in Docker/Supervisor
+    if os.getenv("IN_DOCKER") != "true":
+        chat_process = start_chat_server()
+        nextjs_process = start_nextjs_server()
+        
+        import atexit
+        def cleanup():
+            if chat_process:
+                chat_process.terminate()
+            if nextjs_process:
+                nextjs_process.terminate()
+        atexit.register(cleanup)
     
-    # Start Next.js in background thread
-    nextjs_process = start_nextjs_server()
-    
-    # Register cleanup handler for graceful shutdown
-    import atexit
-    def cleanup():
-        if chat_process:
-            chat_process.terminate()
-        if nextjs_process:
-            nextjs_process.terminate()
-    atexit.register(cleanup)
-    
-    # Start FastAPI
     port = int(os.getenv("PORT", 8000))
     host = os.getenv("HOST", "0.0.0.0")
-    print(f"🔧 FastAPI Backend: http://{host}:{port}")
-    print(f"🎨 Next.js Frontend: http://{host}:3000 (if available)")
-    print(f"💬 Chat Server: http://{host}:5000")
-    
+    print(f"FastAPI Backend: {BACKEND_URL}")
+    print(f"Next.js Frontend: {FRONTEND_URL} (if available)")
+    print(f"Chat Server: {CHAT_URL}")
     uvicorn.run(app, host=host, port=port, reload=False)
