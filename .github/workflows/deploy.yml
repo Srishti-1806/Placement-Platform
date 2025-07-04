@@ -93,12 +93,17 @@ jobs:
           sudo lsof -ti:5000 | xargs -r sudo kill -9 2>/dev/null || true
           sudo lsof -ti:8000 | xargs -r sudo kill -9 2>/dev/null || true
           
-          # Wait for ports to be released
-          echo "⏳ Waiting for ports to be released..."
-          sleep 10
-          
-          # Remove any orphaned containers
-          sudo docker container prune -f
+          echo "🔍 Checking ports before starting..."
+          for port in 3000 5000 8000 80; do
+            if sudo lsof -i:$port; then
+              echo "⚠️ Port $port is in use - attempting to free it"
+              sudo lsof -ti:$port | xargs -r sudo kill -9
+              sleep 2
+            else
+              echo "✅ Port $port is free"
+            fi
+          done
+
           
           # Pull latest image
           echo "📥 Pulling latest Docker image..."
@@ -149,6 +154,14 @@ jobs:
           if sudo docker ps | grep placementpro; then
             echo "✅ Container is running successfully"
             sudo docker ps --filter name=placementpro --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            
+            # Add these lines here ↓
+            echo "📋 Checking supervisor configuration..."
+            sudo docker exec placementpro cat /etc/supervisor/conf.d/supervisord.conf || echo "Supervisor config not found"
+            echo "📋 Checking supervisor processes..."
+            sudo docker exec placementpro supervisorctl status || echo "Supervisor not running"
+            # End of added lines ↑
+            
           else
             echo "❌ Container failed to start"
             sudo docker logs placementpro 2>/dev/null || echo "No logs available"
@@ -165,6 +178,11 @@ jobs:
               echo "✅ Backend API: Working!"
               break
             else
+              # Add detailed error information
+              echo "⚠️ Backend API response:"
+              curl -s http://localhost:8000/api/health || echo "No response"
+              echo "⚠️ Checking backend logs:"
+              sudo docker exec placementpro cat /app/logs/backend.err.log 2>/dev/null || echo "No backend error logs"
               echo "⏳ Backend API attempt $i/10..."
               sleep 10
             fi
@@ -214,22 +232,46 @@ jobs:
               echo "3️⃣ Attempting emergency chat server fix..."
               # Create simplified chat server
               cat > fixed_chat.py << 'EOF'
+              #!/usr/bin/env python3
               # IMPORTANT: These must be the FIRST imports!
               import eventlet
               eventlet.monkey_patch()
-              
+
               from flask import Flask, render_template_string
+              from flask_socketio import SocketIO
               from flask_cors import CORS
-              
+
               app = Flask(__name__)
               CORS(app, origins="*")
-              
+              socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
               @app.route('/')
               def index():
-                  return render_template_string('<h1>Chat Server Running</h1>')
-              
+                  return render_template_string("""
+                  <!DOCTYPE html>
+                  <html>
+                    <head><title>Chat Server</title></head>
+                    <body>
+                      <h1 style="color:green">✅ Chat Server Running</h1>
+                      <p>WebSocket status: <span id="status">Checking...</span></p>
+                      <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+                      <script>
+                        const socket = io();
+                        socket.on('connect', () => {
+                          document.getElementById('status').textContent = 'Connected';
+                          document.getElementById('status').style.color = 'green';
+                        });
+                        socket.on('connect_error', () => {
+                          document.getElementById('status').textContent = 'Connection Error';
+                          document.getElementById('status').style.color = 'red';
+                        });
+                      </script>
+                    </body>
+                  </html>
+                  """)
+
               if __name__ == '__main__':
-                  app.run(host='0.0.0.0', port=5000)
+                  socketio.run(app, host='0.0.0.0', port=5000, debug=False)
               EOF
               
               # Copy fix to container and restart chat process
@@ -270,14 +312,20 @@ jobs:
           # Try direct Flask server if supervisor failed
           if ! curl -s -I http://localhost:5000 | head -n 1 | grep -q "200"; then
             echo "🔄 Chat server failed with supervisor - trying direct Flask start..."
-            sudo docker exec -d placementpro bash -c "cd /app && nohup python -c \"
+            # Create a proper Python file instead of inline commands
+            cat > emergency_chat.py << 'EOF'
             from flask import Flask, render_template_string
             app = Flask(__name__)
             @app.route('/')
             def index():
                 return render_template_string('<h1>Emergency Chat Server</h1>')
-            app.run(host='0.0.0.0', port=5000)
-            \" > /dev/null 2>&1 &"
+            if __name__ == '__main__':
+                app.run(host='0.0.0.0', port=5000)
+            EOF
+            
+            # Copy and run it in the container
+            sudo docker cp emergency_chat.py placementpro:/app/emergency_chat.py
+            sudo docker exec -d placementpro bash -c "cd /app && nohup python emergency_chat.py > /dev/null 2>&1 &"
             sleep 5
             echo -n "💬 Emergency Chat Server: "
             curl -s -I http://localhost:5000 | head -n 1 | grep -q "200" && echo "✅ Accessible" || echo "❌ Failed"
