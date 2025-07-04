@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import * as React from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,9 +27,10 @@ export default function CommunityChat() {
   const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
-    // Get URL from environment or use default localhost
+    // Only run on client
+    if (typeof window === "undefined") return
+
     const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:5000"
-    // Connect to the chat server with explicit config
     const socket = io(CHAT_URL, {
       transports: ["websocket", "polling"],
       withCredentials: false,
@@ -46,12 +48,12 @@ export default function CommunityChat() {
       setIsConnected(false)
     })
 
-    socket.on("message", (msg: { text: string; user?: string; timestamp?: string }) => {
+    socket.on("message", (msg: { text: string; user?: string; timestamp?: string } | string) => {
       const newMsg: Message = {
         id: Date.now().toString(),
         text: typeof msg === "string" ? msg : msg.text,
-        timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
-        user: msg.user || "Anonymous",
+        timestamp: typeof msg === "string" ? new Date() : (msg.timestamp ? new Date(msg.timestamp) : new Date()),
+        user: typeof msg === "string" ? "Anonymous" : (msg.user || "Anonymous"),
       }
       setMessages((prev) => [...prev, newMsg])
     })
