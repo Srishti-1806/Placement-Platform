@@ -74,6 +74,13 @@ jobs:
         command_timeout: 15m
         envs: DOCKER_USERNAME,DOCKER_PASSWORD,EC2_HOST
         script: |
+          echo "🧹 Cleaning up disk space before deployment..."
+          sudo docker system prune -af --volumes
+          sudo docker image prune -af
+          sudo docker container prune -f
+          sudo docker volume prune -f
+          
+          df -h
           echo "DOCKER_USERNAME is: $DOCKER_USERNAME"
           echo "EC2_HOST is: $EC2_HOST"
 
