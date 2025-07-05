@@ -14,19 +14,13 @@ export function FloatingOrbs() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const generatedOrbs = Array.from({ length: 6 }, (_, i) => ({
+      // Reduced orb count for better performance
+      const generatedOrbs = Array.from({ length: 3 }, (_, i) => ({
         id: i,
-        size: Math.random() * 100 + 50,
+        size: Math.random() * 80 + 40, // Smaller sizes
         initialX: Math.random() * window.innerWidth,
         initialY: Math.random() * window.innerHeight,
-        color: [
-          "#10b981",
-          "#059669",
-          "#34d399",
-          "#047857",
-          "#22c55e",
-          "#16a34a",
-        ][i],
+        color: ["#10b981", "#059669", "#34d399"][i],
       }));
       setOrbs(generatedOrbs);
     }
@@ -46,19 +40,19 @@ export function FloatingOrbs() {
           animate={{
             x: [
               orb.initialX,
-              orb.initialX + 200,
-              orb.initialX - 200,
+              orb.initialX + 100, // Reduced movement
+              orb.initialX - 100,
               orb.initialX,
             ],
             y: [
               orb.initialY,
-              orb.initialY - 100,
-              orb.initialY + 100,
+              orb.initialY - 50, // Reduced movement
+              orb.initialY + 50,
               orb.initialY,
             ],
           }}
           transition={{
-            duration: 20 + Math.random() * 10,
+            duration: 15 + Math.random() * 5, // Faster, more consistent
             repeat: Number.POSITIVE_INFINITY,
             ease: "linear",
           }}
