@@ -7,7 +7,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
 
@@ -79,10 +78,12 @@ jobs:
           sudo docker image prune -af
           sudo docker container prune -f
           sudo docker volume prune -f
-          
+          sudo rm -rf /var/lib/docker/tmp/*
+          sudo rm -rf /tmp/*
+          sudo journalctl --vacuum-time=2d
+
           df -h
-          echo "DOCKER_USERNAME is: $DOCKER_USERNAME"
-          echo "EC2_HOST is: $EC2_HOST"
+          sudo docker system df
 
           set -e
           sudo systemctl start docker || true
@@ -90,11 +91,9 @@ jobs:
 
           cd /home/ec2-user/placementpro || mkdir -p /home/ec2-user/placementpro && cd /home/ec2-user/placementpro
 
-          echo "🧹 Complete cleanup of existing services..."
           sudo docker stop placementpro 2>/dev/null || true
           sudo docker rm placementpro 2>/dev/null || true
 
-          echo "🔍 Checking for processes using ports 3000, 5000, 8000..."
           for port in 3000 5000 8000 80; do
             sudo lsof -ti:$port | xargs -r sudo kill -9 2>/dev/null || true
           done
@@ -140,9 +139,7 @@ jobs:
           if sudo docker ps | grep placementpro; then
             echo "✅ Container is running successfully"
             sudo docker ps --filter name=placementpro --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-            echo "📋 Checking supervisor configuration..."
             sudo docker exec placementpro cat /etc/supervisor/conf.d/supervisord.conf || echo "Supervisor config not found"
-            echo "📋 Checking supervisor processes..."
             sudo docker exec placementpro supervisorctl status || echo "Supervisor not running"
           else
             echo "❌ Container failed to start"
@@ -151,7 +148,6 @@ jobs:
           fi
 
           echo "🧪 Testing all services..."
-
           # Backend health check
           echo "🔧 Testing Backend API..."
           for i in {1..10}; do
@@ -159,10 +155,6 @@ jobs:
               echo "✅ Backend API: Working!"
               break
             else
-              echo "⚠️ Backend API response:"
-              curl -s http://localhost:8000/api/health || echo "No response"
-              echo "⚠️ Checking backend logs:"
-              sudo docker exec placementpro cat /app/logs/backend.err.log 2>/dev/null || echo "No backend error logs"
               echo "⏳ Backend API attempt $i/10..."
               sleep 10
             fi
@@ -184,7 +176,7 @@ jobs:
               sleep 15
             fi
             if [ $i -eq 8 ]; then
-              echo "⚠️ Frontend may still be starting..."
+              echo "⚠ Frontend may still be starting..."
             fi
           done
 
@@ -198,14 +190,7 @@ jobs:
               sleep 10
             fi
             if [ $i -eq 5 ]; then
-              echo "⚠️ Chat server might still be starting..."
-              echo "📋 Running chat server diagnostics:"
-              echo "1️⃣ Supervisor status:"
-              sudo docker exec placementpro supervisorctl status chat || echo "Supervisor control not available"
-              echo "2️⃣ Checking eventlet import order:"
-              sudo docker exec placementpro grep -A 5 "import" /app/chat_server.py || echo "Cannot read chat_server.py"
-              echo "3️⃣ Attempting emergency chat server fix..."
-              # (Retain your emergency fix logic here)
+              echo "⚠ Chat server might still be starting..."
             fi
           done
 
@@ -213,14 +198,6 @@ jobs:
           echo "📊 Final deployment status:"
           echo "🐳 Container Status:"
           sudo docker ps --filter name=placementpro --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-          echo ""
-          echo "🔍 Service Health Checks:"
-          echo -n "🔧 Backend API: "
-          curl -s http://localhost:8000/api/health | python3 -c "import sys, json; print('✅ Healthy' if json.load(sys.stdin).get('status') == 'healthy' else '❌ Unhealthy')" 2>/dev/null || echo "❌ Failed"
-          echo -n "🎨 Frontend: "
-          curl -s -I http://localhost:3000 | head -n 1 | grep -q "200" && echo "✅ Accessible" || echo "⚠️ Check manually"
-          echo -n "💬 Chat Server: "
-          curl -s -I http://localhost:5000 | head -n 1 | grep -q "200" && echo "✅ Accessible" || echo "⚠️ Check manually"
           echo ""
           echo "📈 Resource Usage:"
           sudo docker stats placementpro --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
