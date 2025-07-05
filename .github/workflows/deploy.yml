@@ -66,13 +66,17 @@ jobs:
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.7
       with:
-        host: ${{ env.EC2_HOST }}
+        host: ${{ secrets.EC2_HOST }}
         username: ec2-user
-        key: ${{ env.EC2_PRIVATE_KEY }}
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
         port: 22
         timeout: 300s
         command_timeout: 15m
+        envs: DOCKER_USERNAME,DOCKER_PASSWORD,EC2_HOST
         script: |
+          echo "DOCKER_USERNAME is: $DOCKER_USERNAME"
+          echo "EC2_HOST is: $EC2_HOST"
+
           set -e
           sudo systemctl start docker || true
           sudo systemctl enable docker || true
