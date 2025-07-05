@@ -33,6 +33,50 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Ensure proper text color inheritance */
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Fix text visibility issues */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  p,
+  span,
+  div,
+  a,
+  label {
+    color: inherit !important;
+  }
+
+  /* Ensure cards and their content are visible */
+  .card {
+    background: hsl(var(--card));
+    color: hsl(var(--card-foreground)) !important;
+  }
+
+  /* Fix any transparent text classes */
+  .text-transparent {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Ensure input elements are visible */
+  input,
+  textarea,
+  select {
+    color: hsl(var(--foreground)) !important;
+    background: hsl(var(--input)) !important;
+  }
+
+  /* Ensure button text is visible */
+  button {
+    color: inherit !important;
   }
 }
 
