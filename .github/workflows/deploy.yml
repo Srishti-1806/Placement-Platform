@@ -70,7 +70,7 @@ jobs:
         echo "✅ Docker image pushed successfully"
 
     - name: Deploy to EC2
-      uses: appleboy/ssh-action@v0.1.7
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ec2-user
