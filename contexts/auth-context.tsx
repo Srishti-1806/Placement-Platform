@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { createContext, useContext, useState, useEffect } from "react";
 
 interface User {
@@ -17,6 +16,8 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (name: string, email: string, password: string) => Promise<boolean>;
+  signupGithub: () => Promise<boolean>;
+  signupGoogle: () => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -28,7 +29,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session only on client side
     if (typeof window !== "undefined") {
       const savedUser = localStorage.getItem("placement-user");
       if (savedUser) {
@@ -45,11 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-
-    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Mock authentication
     if (email && password.length >= 6) {
       const mockUser: User = {
         id: "1",
@@ -59,11 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: "student",
         joinedAt: new Date(),
       };
-
       setUser(mockUser);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("placement-user", JSON.stringify(mockUser));
-      }
+      localStorage.setItem("placement-user", JSON.stringify(mockUser));
       setIsLoading(false);
       return true;
     }
@@ -72,17 +66,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
 
-  const signup = async (
-    name: string,
-    email: string,
-    password: string,
-  ): Promise<boolean> => {
+  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-
-    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Mock registration
     if (name && email && password.length >= 6) {
       const mockUser: User = {
         id: Date.now().toString(),
@@ -92,11 +79,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: "student",
         joinedAt: new Date(),
       };
-
       setUser(mockUser);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("placement-user", JSON.stringify(mockUser));
-      }
+      localStorage.setItem("placement-user", JSON.stringify(mockUser));
       setIsLoading(false);
       return true;
     }
@@ -105,15 +89,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
 
+  const signupGithub = async (): Promise<boolean> => {
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const mockUser: User = {
+      id: Date.now().toString(),
+      name: "GithubUser",
+      email: "githubuser@example.com",
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=githubuser`,
+      role: "student",
+      joinedAt: new Date(),
+    };
+    setUser(mockUser);
+    localStorage.setItem("placement-user", JSON.stringify(mockUser));
+    setIsLoading(false);
+    return true;
+  };
+
+  const signupGoogle = async (): Promise<boolean> => {
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const mockUser: User = {
+      id: Date.now().toString(),
+      name: "GoogleUser",
+      email: "googleuser@example.com",
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=googleuser`,
+      role: "student",
+      joinedAt: new Date(),
+    };
+    setUser(mockUser);
+    localStorage.setItem("placement-user", JSON.stringify(mockUser));
+    setIsLoading(false);
+    return true;
+  };
+
   const logout = () => {
     setUser(null);
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("placement-user");
-    }
+    localStorage.removeItem("placement-user");
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        signup,
+        signupGithub,
+        signupGoogle,
+        logout,
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
