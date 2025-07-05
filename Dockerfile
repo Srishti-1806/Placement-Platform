@@ -84,10 +84,11 @@ for i in {1..3}; do\n\
 done\n\
 exit 1\n' > /healthcheck.sh && chmod +x /healthcheck.sh
 
-RUN chown -R appuser:appuser /app
+
 
 # -- Create non-root user --
 RUN useradd -m appuser
+RUN chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 3000 5000 8000 80
