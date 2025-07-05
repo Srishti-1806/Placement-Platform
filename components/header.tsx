@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut } from "lucide-react";
@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useSound } from "@/hooks/use-sound";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export function Header() {
+function HeaderInternal() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -252,5 +252,38 @@ export function Header() {
         </AnimatePresence>
       </div>
     </header>
+  );
+}
+
+// Header loading component
+function HeaderLoading() {
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <div className="w-32 h-8 bg-gray-700 animate-pulse rounded"></div>
+          </div>
+          <div className="hidden md:flex space-x-8">
+            <div className="w-16 h-6 bg-gray-700 animate-pulse rounded"></div>
+            <div className="w-16 h-6 bg-gray-700 animate-pulse rounded"></div>
+            <div className="w-16 h-6 bg-gray-700 animate-pulse rounded"></div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="w-20 h-8 bg-gray-700 animate-pulse rounded"></div>
+            <div className="w-20 h-8 bg-gray-700 animate-pulse rounded"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// Main Header export with Suspense wrapper
+export function Header() {
+  return (
+    <Suspense fallback={<HeaderLoading />}>
+      <HeaderInternal />
+    </Suspense>
   );
 }
