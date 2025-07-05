@@ -33,8 +33,7 @@ export function GalaxyBackground() {
       drift: number;
     }> = [];
 
-    // Create stars
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 100; i++) {
       stars.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -47,8 +46,7 @@ export function GalaxyBackground() {
       });
     }
 
-    // Create nebula clouds
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 4; i++) {
       nebulaClouds.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -67,11 +65,16 @@ export function GalaxyBackground() {
     }
 
     let time = 0;
+    let lastTime = 0;
 
-    const animate = () => {
-      time += 0.01;
+    const animate = (currentTime: number) => {
+      if (currentTime - lastTime < 33) {
+        requestAnimationFrame(animate);
+        return;
+      }
+      lastTime = currentTime;
+      time += 0.005;
 
-      // Create gradient background
       const gradient = ctx.createRadialGradient(
         canvas.width / 2,
         canvas.height / 2,
@@ -87,18 +90,16 @@ export function GalaxyBackground() {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw nebula clouds
       nebulaClouds.forEach((cloud) => {
         ctx.save();
         ctx.globalAlpha =
           cloud.opacity * (0.8 + 0.2 * Math.sin(time * cloud.drift));
         ctx.fillStyle = cloud.color;
-        ctx.filter = "blur(40px)";
         ctx.beginPath();
         ctx.arc(
-          cloud.x + Math.sin(time * cloud.drift) * 20,
+          cloud.x + Math.sin(time * cloud.drift) * 10,
           cloud.y,
-          cloud.size,
+          cloud.size * 0.7,
           0,
           Math.PI * 2,
         );
@@ -106,14 +107,11 @@ export function GalaxyBackground() {
         ctx.restore();
       });
 
-      // Draw stars
       stars.forEach((star) => {
         ctx.save();
         ctx.globalAlpha =
           star.opacity * (0.5 + 0.5 * Math.sin(time * star.twinkleSpeed));
         ctx.fillStyle = star.color;
-        ctx.shadowColor = star.color;
-        ctx.shadowBlur = star.size * 2;
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
         ctx.fill();
@@ -123,7 +121,7 @@ export function GalaxyBackground() {
       requestAnimationFrame(animate);
     };
 
-    animate();
+    requestAnimationFrame(animate);
 
     const handleResize = () => {
       canvas.width = window.innerWidth;
