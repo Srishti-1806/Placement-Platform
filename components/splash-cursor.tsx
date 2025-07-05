@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface SplashCursorProps {
   DENSITY_DISSIPATION?: number;
@@ -18,8 +18,15 @@ export default function SplashCursor({
   BACK_COLOR = { r: 0.1, g: 0.1, b: 0.2 },
 }: SplashCursorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -181,6 +188,11 @@ export default function SplashCursor({
     COLOR_UPDATE_SPEED,
     BACK_COLOR,
   ]);
+
+  // Don't render anything until mounted on client
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <canvas
