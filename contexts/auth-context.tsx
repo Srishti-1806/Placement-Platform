@@ -1,46 +1,53 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect } from "react";
 
 interface User {
-  id: string
-  name: string
-  email: string
-  avatar?: string
-  role: "student" | "admin"
-  joinedAt: Date
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: "student" | "admin";
+  joinedAt: Date;
 }
 
 interface AuthContextType {
-  user: User | null
-  login: (email: string, password: string) => Promise<boolean>
-  signup: (name: string, email: string, password: string) => Promise<boolean>
-  logout: () => void
-  isLoading: boolean
+  user: User | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (name: string, email: string, password: string) => Promise<boolean>;
+  logout: () => void;
+  isLoading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem("placement-user")
-    if (savedUser) {
-      setUser(JSON.parse(savedUser))
+    // Check for existing session only on client side
+    if (typeof window !== "undefined") {
+      const savedUser = localStorage.getItem("placement-user");
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (error) {
+          console.error("Failed to parse saved user:", error);
+          localStorage.removeItem("placement-user");
+        }
+      }
     }
-    setIsLoading(false)
-  }, [])
+    setIsLoading(false);
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true)
+    setIsLoading(true);
 
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Mock authentication
     if (email && password.length >= 6) {
@@ -51,23 +58,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
         role: "student",
         joinedAt: new Date(),
-      }
+      };
 
-      setUser(mockUser)
-      localStorage.setItem("placement-user", JSON.stringify(mockUser))
-      setIsLoading(false)
-      return true
+      setUser(mockUser);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("placement-user", JSON.stringify(mockUser));
+      }
+      setIsLoading(false);
+      return true;
     }
 
-    setIsLoading(false)
-    return false
-  }
+    setIsLoading(false);
+    return false;
+  };
 
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
-    setIsLoading(true)
+  const signup = async (
+    name: string,
+    email: string,
+    password: string,
+  ): Promise<boolean> => {
+    setIsLoading(true);
 
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Mock registration
     if (name && email && password.length >= 6) {
@@ -78,30 +91,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
         role: "student",
         joinedAt: new Date(),
-      }
+      };
 
-      setUser(mockUser)
-      localStorage.setItem("placement-user", JSON.stringify(mockUser))
-      setIsLoading(false)
-      return true
+      setUser(mockUser);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("placement-user", JSON.stringify(mockUser));
+      }
+      setIsLoading(false);
+      return true;
     }
 
-    setIsLoading(false)
-    return false
-  }
+    setIsLoading(false);
+    return false;
+  };
 
   const logout = () => {
-    setUser(null)
-    localStorage.removeItem("placement-user")
-  }
+    setUser(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("placement-user");
+    }
+  };
 
-  return <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
+  return context;
 }
