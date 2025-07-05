@@ -107,7 +107,7 @@ export function FeaturesSidebar() {
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
-    playSound(isOpen ? "close" : "open");
+    playSound("click");
   };
 
   return (
