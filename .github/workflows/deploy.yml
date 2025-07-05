@@ -32,9 +32,7 @@ jobs:
     env:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      EC2_HOST: ${{ secrets.EC2_HOST }}
-      EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-    steps: # <--- THIS 'steps:' BLOCK IS CRITICAL
+    steps:
     - uses: actions/checkout@v3
 
     - name: Clean up Docker space on runner
@@ -51,134 +49,141 @@ jobs:
         docker push "$DOCKER_USERNAME/placementpro:latest"
         echo "✅ Docker image pushed successfully"
 
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ec2-user
-        key: ${{ secrets.EC2_PRIVATE_KEY }}
-        port: 22
-        timeout: 300s
-        command_timeout: 15m
-        envs: DOCKER_USERNAME,EC2_HOST
-        script: |
-          echo "🧹 Cleaning up disk space on EC2 instance..."
-          # WARNING: The '--volumes' flag removes ALL unused volumes. Use with caution if other apps share this server.
-          sudo docker system prune -af --volumes
-          sudo journalctl --vacuum-time=2d
-          df -h
+    # Create the deployment script
+    - name: Create deployment script
+      run: |
+        cat > deploy.sh << 'EOL'
+        #!/bin/bash
+        echo "🧹 Cleaning up disk space on EC2 instance..."
+        sudo docker system prune -af --volumes
+        sudo journalctl --vacuum-time=2d
+        df -h
 
-          set -e
-          cd /home/ec2-user/placementpro || (mkdir -p /home/ec2-user/placementpro && cd /home/ec2-user/placementpro)
+        set -e
+        cd /home/ec2-user/placementpro || (mkdir -p /home/ec2-user/placementpro && cd /home/ec2-user/placementpro)
 
-          echo "🛑 Stopping and removing old container and processes..."
-          sudo docker stop placementpro 2>/dev/null || true
-          sudo docker rm placementpro 2>/dev/null || true
-          for port in 3000 5000 8000 80; do
-            sudo lsof -ti:$port | xargs -r sudo kill -9 2>/dev/null || true
-          done
+        echo "🛑 Stopping and removing old container and processes..."
+        sudo docker stop placementpro 2>/dev/null || true
+        sudo docker rm placementpro 2>/dev/null || true
+        for port in 3000 5000 8000 80; do
+          sudo lsof -ti:$port | xargs -r sudo kill -9 2>/dev/null || true
+        done
 
-          echo "📥 Pulling latest Docker image..."
-          sudo docker pull $DOCKER_USERNAME/placementpro:latest
+        echo "📥 Pulling latest Docker image..."
+        sudo docker pull $1/placementpro:latest
 
-          mkdir -p temp static/reports static/summaries static/transcripts
+        mkdir -p temp static/reports static/summaries static/transcripts
 
-          echo "🚀 Starting new PlacementPro container..."
-          sudo docker run -d \
-            --name placementpro \
-            -p 80:3000 \
-            -p 3000:3000 \
-            -p 5000:5000 \
-            -p 8000:8000 \
-            -v $(pwd)/temp:/app/temp \
-            -v $(pwd)/static:/app/static \
-            --restart unless-stopped \
-            --memory="3g" \
-            --cpus="2.0" \
-            $DOCKER_USERNAME/placementpro:latest
+        echo "🚀 Starting new PlacementPro container..."
+        sudo docker run -d \
+          --name placementpro \
+          -p 80:3000 \
+          -p 3000:3000 \
+          -p 5000:5000 \
+          -p 8000:8000 \
+          -v $(pwd)/temp:/app/temp \
+          -v $(pwd)/static:/app/static \
+          --restart unless-stopped \
+          --memory="3g" \
+          --cpus="2.0" \
+          $1/placementpro:latest
 
-          if [ $? -ne 0 ]; then
-            echo "❌ Container failed to start. Checking logs and port conflicts..."
-            sudo lsof -i:3000 || echo "Port 3000 is free"
-            sudo lsof -i:5000 || echo "Port 5000 is free"
-            sudo lsof -i:8000 || echo "Port 8000 is free"
-            sudo docker logs placementpro 2>/dev/null || echo "No logs available for failed container."
+        if [ $? -ne 0 ]; then
+          echo "❌ Container failed to start. Checking logs and port conflicts..."
+          sudo lsof -i:3000 || echo "Port 3000 is free"
+          sudo lsof -i:5000 || echo "Port 5000 is free"
+          sudo lsof -i:8000 || echo "Port 8000 is free"
+          sudo docker logs placementpro 2>/dev/null || echo "No logs available for failed container."
+          exit 1
+        fi
+
+        echo "⏳ Waiting for container to become healthy..."
+        for i in {1..15}; do
+          HEALTH_STATUS=$(sudo docker inspect --format '{{.State.Health.Status}}' placementpro)
+          if [ "$HEALTH_STATUS" = "healthy" ]; then
+            echo "✅ Container is healthy!"
+            break
+          fi
+          echo "Container status is '$HEALTH_STATUS'. Waiting... (Attempt $i/15)"
+          sleep 10
+          if [ $i -eq 15 ]; then
+            echo "❌ Container did not become healthy in time."
+            sudo docker logs placementpro --tail 50
             exit 1
           fi
+        done
 
-          echo "⏳ Waiting for container to become healthy..."
-          for i in {1..15}; do
-            HEALTH_STATUS=$(sudo docker inspect --format '{{.State.Health.Status}}' placementpro)
-            if [ "$HEALTH_STATUS" = "healthy" ]; then
-              echo "✅ Container is healthy!"
-              break
-            fi
-            echo "Container status is '$HEALTH_STATUS'. Waiting... (Attempt $i/15)"
-            sleep 10
-            if [ $i -eq 15 ]; then
-              echo "❌ Container did not become healthy in time."
-              sudo docker logs placementpro --tail 50
-              exit 1
-            fi
-          done
+        echo "🧪 Testing all services..."
+        # Backend health check
+        echo "🔧 Testing Backend API..."
+        for i in {1..10}; do
+          if curl -f -s http://localhost:8000/api/health > /dev/null; then
+            echo "✅ Backend API: Working!"
+            break
+          fi
+          echo "⏳ Backend API attempt $i/10..."
+          sleep 10
+          if [ $i -eq 10 ]; then
+            echo "❌ Backend API failed after 10 attempts"
+            sudo docker logs placementpro --tail 50
+            exit 1
+          fi
+        done
 
-          echo "🧪 Testing all services..."
-          # Backend health check
-          echo "🔧 Testing Backend API..."
-          for i in {1..10}; do
-            if curl -f -s http://localhost:8000/api/health > /dev/null; then
-              echo "✅ Backend API: Working!"
-              break
-            fi
-            echo "⏳ Backend API attempt $i/10..."
-            sleep 10
-            if [ $i -eq 10 ]; then
-              echo "❌ Backend API failed after 10 attempts"
-              sudo docker logs placementpro --tail 50
-              exit 1
-            fi
-          done
+        # Frontend health check
+        echo "🎨 Testing Frontend..."
+        for i in {1..8}; do
+          if curl -f -s http://localhost:3000 > /dev/null; then
+            echo "✅ Frontend: Working!"
+            break
+          fi
+          echo "⏳ Frontend attempt $i/8..."
+          sleep 15
+        done
 
-          # Frontend health check
-          echo "🎨 Testing Frontend..."
-          for i in {1..8}; do
-            if curl -f -s http://localhost:3000 > /dev/null; then
-              echo "✅ Frontend: Working!"
-              break
-            fi
-            echo "⏳ Frontend attempt $i/8..."
-            sleep 15
-          done
+        # Chat server health check
+        echo "💬 Testing Chat Server..."
+        for i in {1..5}; do
+          # We just check if the port is open, as websockets might not return a simple 200 OK
+          if nc -z localhost 5000; then
+            echo "✅ Chat Server: Port is open!"
+            break
+          fi
+          echo "⏳ Chat server attempt $i/5..."
+          sleep 10
+          if [ $i -eq 5 ]; then
+            echo "⚠️ Chat Server did not respond."
+          fi
+        done
 
-           # Chat server health check
-          echo "💬 Testing Chat Server..."
-          for i in {1..5}; do
-            # We just check if the port is open, as websockets might not return a simple 200 OK
-            if nc -z localhost 5000; then
-              echo "✅ Chat Server: Port is open!"
-              break
-            fi
-            echo "⏳ Chat server attempt $i/5..."
-            sleep 10
-            if [ $i -eq 5 ]; then
-              echo "⚠️ Chat Server did not respond."
-            fi
-          done
+        echo ""
+        echo "📊 Final deployment status:"
+        echo "🐳 Container Status:"
+        sudo docker ps --filter name=placementpro --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        echo ""
+        echo "📈 Resource Usage:"
+        sudo docker stats placementpro --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+        echo ""
+        echo "📋 Recent Service Logs:"
+        sudo docker logs placementpro --tail 20
 
-          echo ""
-          echo "📊 Final deployment status:"
-          echo "🐳 Container Status:"
-          sudo docker ps --filter name=placementpro --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-          echo ""
-          echo "📈 Resource Usage:"
-          sudo docker stats placementpro --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
-          echo ""
-          echo "📋 Recent Service Logs:"
-          sudo docker logs placementpro --tail 20
+        echo ""
+        echo "🎉 Complete PlacementPro platform deployed successfully!"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🌐 MAIN WEBSITE: http://$2"
+        echo "📖 API Documentation: http://$2:8000/docs"
+        echo "🏥 Health Check: http://$2:8000/api/health"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        EOL
+        chmod +x deploy.sh
 
-          echo ""
-          echo "🎉 Complete PlacementPro platform deployed successfully!"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "🌐 MAIN WEBSITE: http://$EC2_HOST"
-          echo "📖 API Documentation: http://$EC2_HOST:8000/docs"
-          echo "🏥 Health Check: http://$EC2_HOST:8000/api/health"
+    # Deploy using SSH with a more reliable action
+    - name: Deploy to EC2
+      uses: easingthemes/ssh-deploy@main
+      with:
+        SSH_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+        REMOTE_HOST: ${{ secrets.EC2_HOST }}
+        REMOTE_USER: ec2-user
+        SOURCE: "deploy.sh"
+        TARGET: "/home/ec2-user"
+        SCRIPT_AFTER: "cd /home/ec2-user && bash deploy.sh ${{ secrets.DOCKER_USERNAME }} ${{ secrets.EC2_HOST }}"
