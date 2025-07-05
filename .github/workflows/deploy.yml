@@ -5,6 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
+  # This job performs a basic check on the Python code.
   test:
     runs-on: ubuntu-latest
     steps:
@@ -24,10 +25,10 @@ jobs:
       run: |
         python -c "from main import app; print('✅ App loads successfully')"
 
+  # This job builds the Docker image and deploys it to the EC2 instance.
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     env:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -35,31 +36,13 @@ jobs:
       EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
     steps:
     - uses: actions/checkout@v3
+
     - name: Clean up Docker space on runner
       run: |
         echo "🧹 Cleaning up disk space on GitHub runner..."
         docker system prune -af || true
-        docker image prune -af || true
-        docker container prune -f || true
-        df -h
 
-    - name: Set up Node.js for Frontend Build
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-
-    - name: Install pnpm
-      run: npm install -g pnpm
-
-    - name: Install frontend dependencies
-      run: pnpm install
-
-    - name: Build Next.js frontend
-      run: |
-        echo "🎨 Building Next.js frontend..."
-        pnpm build
-        echo "✅ Frontend build completed"
-
+    # The frontend is built inside the Dockerfile, so we don't need to build it here.
     - name: Build and push Docker image
       run: |
         echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
@@ -78,32 +61,20 @@ jobs:
         port: 22
         timeout: 300s
         command_timeout: 15m
-        envs: DOCKER_USERNAME,DOCKER_PASSWORD,EC2_HOST
+        envs: DOCKER_USERNAME,EC2_HOST
         script: |
-          echo "🧹 Checking disk usage before cleanup..."
-          df -h
-          
-          echo "🧹 Cleaning up disk space before deployment..."
+          echo "🧹 Cleaning up disk space on EC2 instance..."
+          # WARNING: The '--volumes' flag removes ALL unused volumes. Use with caution if other apps share this server.
           sudo docker system prune -af --volumes
-          sudo docker image prune -af
-          sudo docker container prune -f
-          sudo docker volume prune -f
-          sudo rm -rf /var/lib/docker/tmp/*
-          sudo rm -rf /tmp/*
           sudo journalctl --vacuum-time=2d
-
           df -h
-          sudo docker system df
 
           set -e
-          sudo systemctl start docker || true
-          sudo systemctl enable docker || true
+          cd /home/ec2-user/placementpro || (mkdir -p /home/ec2-user/placementpro && cd /home/ec2-user/placementpro)
 
-          cd /home/ec2-user/placementpro || mkdir -p /home/ec2-user/placementpro && cd /home/ec2-user/placementpro
-
+          echo "🛑 Stopping and removing old container and processes..."
           sudo docker stop placementpro 2>/dev/null || true
           sudo docker rm placementpro 2>/dev/null || true
-
           for port in 3000 5000 8000 80; do
             sudo lsof -ti:$port | xargs -r sudo kill -9 2>/dev/null || true
           done
@@ -113,7 +84,7 @@ jobs:
 
           mkdir -p temp static/reports static/summaries static/transcripts
 
-          echo "🚀 Starting complete PlacementPro platform..."
+          echo "🚀 Starting new PlacementPro container..."
           sudo docker run -d \
             --name placementpro \
             -p 80:3000 \
@@ -122,52 +93,46 @@ jobs:
             -p 8000:8000 \
             -v $(pwd)/temp:/app/temp \
             -v $(pwd)/static:/app/static \
-            -e HOSTNAME="$EC2_HOST" \
-            -e IN_DOCKER="true" \
-            -e FRONTEND_URL="http://$EC2_HOST:3000" \
-            -e CHAT_URL="http://$EC2_HOST:5000" \
-            -e BACKEND_URL="http://$EC2_HOST:8000" \
             --restart unless-stopped \
             --memory="3g" \
             --cpus="2.0" \
             $DOCKER_USERNAME/placementpro:latest
 
-          if [ $? -eq 0 ]; then
-            echo "✅ Container started successfully"
-          else
-            echo "❌ Container failed to start, checking port conflicts..."
-            for port in 3000 5000 8000; do
-              sudo lsof -i:$port || echo "Port $port is free"
-            done
-            sudo docker logs placementpro 2>/dev/null || echo "No logs available"
+          if [ $? -ne 0 ]; then
+            echo "❌ Container failed to start. Checking logs and port conflicts..."
+            sudo lsof -i:3000 || echo "Port 3000 is free"
+            sudo lsof -i:5000 || echo "Port 5000 is free"
+            sudo lsof -i:8000 || echo "Port 8000 is free"
+            sudo docker logs placementpro 2>/dev/null || echo "No logs available for failed container."
             exit 1
           fi
 
-          echo "⏳ Waiting for all services to start..."
-          sleep 90
-
-          if sudo docker ps | grep placementpro; then
-            echo "✅ Container is running successfully"
-            sudo docker ps --filter name=placementpro --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-            sudo docker exec placementpro cat /etc/supervisor/conf.d/supervisord.conf || echo "Supervisor config not found"
-            sudo docker exec placementpro supervisorctl status || echo "Supervisor not running"
-          else
-            echo "❌ Container failed to start"
-            sudo docker logs placementpro 2>/dev/null || echo "No logs available"
-            exit 1
-          fi
+          echo "⏳ Waiting for container to become healthy..."
+          for i in {1..15}; do
+            HEALTH_STATUS=$(sudo docker inspect --format '{{.State.Health.Status}}' placementpro)
+            if [ "$HEALTH_STATUS" = "healthy" ]; then
+              echo "✅ Container is healthy!"
+              break
+            fi
+            echo "Container status is '$HEALTH_STATUS'. Waiting... (Attempt $i/15)"
+            sleep 10
+            if [ $i -eq 15 ]; then
+              echo "❌ Container did not become healthy in time."
+              sudo docker logs placementpro --tail 50
+              exit 1
+            fi
+          done
 
           echo "🧪 Testing all services..."
           # Backend health check
           echo "🔧 Testing Backend API..."
           for i in {1..10}; do
-            if curl -f -s http://localhost:8000/api/health; then
+            if curl -f -s http://localhost:8000/api/health > /dev/null; then
               echo "✅ Backend API: Working!"
               break
-            else
-              echo "⏳ Backend API attempt $i/10..."
-              sleep 10
             fi
+            echo "⏳ Backend API attempt $i/10..."
+            sleep 10
             if [ $i -eq 10 ]; then
               echo "❌ Backend API failed after 10 attempts"
               sudo docker logs placementpro --tail 50
@@ -181,27 +146,9 @@ jobs:
             if curl -f -s http://localhost:3000 > /dev/null; then
               echo "✅ Frontend: Working!"
               break
-            else
-              echo "⏳ Frontend attempt $i/8..."
-              sleep 15
             fi
-            if [ $i -eq 8 ]; then
-              echo "⚠ Frontend may still be starting..."
-            fi
-          done
-
-          echo "💬 Testing Chat Server..."
-          for i in {1..5}; do
-            if curl -f -s http://localhost:5000 > /dev/null; then
-              echo "✅ Chat Server: Working!"
-              break
-            else
-              echo "⏳ Chat server attempt $i/5..."
-              sleep 10
-            fi
-            if [ $i -eq 5 ]; then
-              echo "⚠ Chat server might still be starting..."
-            fi
+            echo "⏳ Frontend attempt $i/8..."
+            sleep 15
           done
 
           echo ""
@@ -211,21 +158,13 @@ jobs:
           echo ""
           echo "📈 Resource Usage:"
           sudo docker stats placementpro --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
-
           echo ""
           echo "📋 Recent Service Logs:"
           sudo docker logs placementpro --tail 20
-
-          echo "🧹 Cleaning up old Docker images..."
-          sudo docker image prune -f --filter="dangling=true"
 
           echo ""
           echo "🎉 Complete PlacementPro platform deployed successfully!"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🌐 MAIN WEBSITE: http://$EC2_HOST"
-          echo "🎨 Frontend (Next.js): http://$EC2_HOST:3000"
-          echo "🔧 Backend API: http://$EC2_HOST:8000"
-          echo "💬 Community Chat: http://$EC2_HOST:5000"
           echo "📖 API Documentation: http://$EC2_HOST:8000/docs"
           echo "🏥 Health Check: http://$EC2_HOST:8000/api/health"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
