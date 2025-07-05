@@ -5,6 +5,7 @@ import type React from "react";
 import { createContext, useContext, useState, useEffect } from "react";
 
 interface SettingsContextType {
+  isMounted: boolean;
   galaxyEnabled: boolean;
   setGalaxyEnabled: (enabled: boolean) => void;
   soundEnabled: boolean;
@@ -18,11 +19,13 @@ const SettingsContext = createContext<SettingsContextType | undefined>(
 );
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
+  const [isMounted, setIsMounted] = useState(false);
   const [galaxyEnabled, setGalaxyEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
+    setIsMounted(true);
     // Load settings from localStorage only on client side
     if (typeof window !== "undefined") {
       const savedSettings = localStorage.getItem("placement-settings");
@@ -51,6 +54,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   return (
     <SettingsContext.Provider
       value={{
+        isMounted,
         galaxyEnabled,
         setGalaxyEnabled,
         soundEnabled,
