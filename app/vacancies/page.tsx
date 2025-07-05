@@ -624,10 +624,10 @@ export default function RegionalJobsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
               >
-                <TabsList className="grid w-full grid-cols-2 mb-12 bg-gray-900/80 backdrop-blur-xl border border-gray-700/50 p-2 rounded-2xl">
+                <TabsList className="flex justify-center gap-4 mb-12 bg-gray-900/80 backdrop-blur-xl border border-gray-700/50 p-2 rounded-2xl">
                   <TabsTrigger
                     value="search"
-                    className="text-lg py-4 px-8 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-green-600 data-[state=active]:text-white transition-all duration-300"
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl hover:bg-emerald-700/50"
                   >
                     <Search className="h-5 w-5 mr-3" />
                     🔍 Explore Opportunities
