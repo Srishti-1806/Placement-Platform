@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function GalaxyBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -134,6 +141,11 @@ export function GalaxyBackground() {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  // Don't render anything until mounted on client
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <canvas
