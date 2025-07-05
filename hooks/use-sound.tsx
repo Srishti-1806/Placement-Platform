@@ -1,57 +1,71 @@
-"use client"
+"use client";
 
-import { useCallback } from "react"
-import { useSettings } from "@/contexts/settings-context"
+import { useCallback } from "react";
+import { useSettings } from "@/contexts/settings-context";
 
 export function useSound() {
-  const { soundEnabled } = useSettings()
+  const { soundEnabled } = useSettings();
 
   const playSound = useCallback(
     (type: "click" | "hover" | "success" | "error" | "notification") => {
-      if (!soundEnabled) return
+      if (!soundEnabled || typeof window === "undefined") return;
 
       // Create audio context for better performance
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const AudioContextClass =
+        window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
 
-      const playTone = (frequency: number, duration: number, type: OscillatorType = "sine") => {
-        const oscillator = audioContext.createOscillator()
-        const gainNode = audioContext.createGain()
+      const audioContext = new AudioContextClass();
 
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.destination)
+      const playTone = (
+        frequency: number,
+        duration: number,
+        type: OscillatorType = "sine",
+      ) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
 
-        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime)
-        oscillator.type = type
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
 
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration)
+        oscillator.frequency.setValueAtTime(
+          frequency,
+          audioContext.currentTime,
+        );
+        oscillator.type = type;
 
-        oscillator.start(audioContext.currentTime)
-        oscillator.stop(audioContext.currentTime + duration)
-      }
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + duration,
+        );
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+      };
 
       switch (type) {
         case "click":
-          playTone(800, 0.1, "square")
-          break
+          playTone(800, 0.1, "square");
+          break;
         case "hover":
-          playTone(600, 0.05, "sine")
-          break
+          playTone(600, 0.05, "sine");
+          break;
         case "success":
-          playTone(523, 0.2, "sine") // C note
-          setTimeout(() => playTone(659, 0.2, "sine"), 100) // E note
-          break
+          playTone(523, 0.2, "sine"); // C note
+          setTimeout(() => playTone(659, 0.2, "sine"), 100); // E note
+          break;
         case "error":
-          playTone(300, 0.3, "sawtooth")
-          break
+          playTone(300, 0.3, "sawtooth");
+          break;
         case "notification":
-          playTone(800, 0.1, "sine")
-          setTimeout(() => playTone(1000, 0.1, "sine"), 150)
-          break
+          playTone(800, 0.1, "sine");
+          setTimeout(() => playTone(1000, 0.1, "sine"), 150);
+          break;
       }
     },
     [soundEnabled],
-  )
+  );
 
-  return { playSound }
+  return { playSound };
 }
