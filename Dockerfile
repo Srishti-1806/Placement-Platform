@@ -84,7 +84,8 @@ for i in {1..3}; do\n\
 done\n\
 exit 1\n' > /healthcheck.sh && chmod +x /healthcheck.sh
 
-
+# -- Install pnpm in the final image --
+RUN npm install -g pnpm
 
 # -- Create non-root user --
 RUN useradd -m appuser
