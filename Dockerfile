@@ -66,9 +66,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     IN_DOCKER=true
 
-# -- Create non-root user --
-RUN useradd -m appuser
-USER appuser
+
 
 # -- Create supervisor log directories and set permissions --
 RUN mkdir -p /app/logs && \
@@ -76,6 +74,10 @@ RUN mkdir -p /app/logs && \
           /app/logs/chat.out.log /app/logs/chat.err.log \
           /app/logs/frontend.out.log /app/logs/frontend.err.log && \
     chmod -R 777 /app/logs
+
+# -- Create non-root user --
+RUN useradd -m appuser
+USER appuser
 
 EXPOSE 3000 5000 8000 80
 
