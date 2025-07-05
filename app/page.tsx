@@ -820,7 +820,7 @@ export default function Home() {
                           {feature.description}
                         </p>
 
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mt-auto">
                           <div className="flex items-center text-magenta-300 font-semibold group-hover:text-magenta-200 transition-colors">
                             <span>Explore Feature</span>
                             <ChevronRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
