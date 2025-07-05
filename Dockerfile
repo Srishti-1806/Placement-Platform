@@ -12,12 +12,12 @@ RUN pnpm build
 FROM python:3.11-slim AS backend-builder
 
 WORKDIR /app
-COPY backend/requirements.txt .
+COPY requirements.txt .
 RUN python -m venv /opt/venv && \
     /opt/venv/bin/pip install --upgrade pip && \
     /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
-COPY backend .
+COPY backend /app/backend
 
 # ---- Stage 3: Final image ----
 FROM python:3.11-slim
@@ -31,7 +31,7 @@ RUN apt-get update && \
 
 # -- Copy Python environment and backend --
 COPY --from=backend-builder /opt/venv /opt/venv
-COPY --from=backend-builder /app /app/backend
+COPY --from=backend-builder /app/backend /app/backend
 
 # -- Copy frontend build output only --
 COPY --from=frontend-builder /app/frontend/.next /app/frontend/.next
