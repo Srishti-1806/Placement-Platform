@@ -35,6 +35,13 @@ jobs:
       EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
     steps:
     - uses: actions/checkout@v3
+    - name: Clean up Docker space on runner
+      run: |
+        echo "🧹 Cleaning up disk space on GitHub runner..."
+        docker system prune -af || true
+        docker image prune -af || true
+        docker container prune -f || true
+        df -h
 
     - name: Set up Node.js for Frontend Build
       uses: actions/setup-node@v3
@@ -73,6 +80,9 @@ jobs:
         command_timeout: 15m
         envs: DOCKER_USERNAME,DOCKER_PASSWORD,EC2_HOST
         script: |
+          echo "🧹 Checking disk usage before cleanup..."
+          df -h
+          
           echo "🧹 Cleaning up disk space before deployment..."
           sudo docker system prune -af --volumes
           sudo docker image prune -af
