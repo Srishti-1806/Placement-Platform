@@ -75,12 +75,6 @@ RUN mkdir -p /app/logs && \
           /app/logs/frontend.out.log /app/logs/frontend.err.log && \
     chmod -R 777 /app/logs
 
-# -- Create non-root user --
-RUN useradd -m appuser
-USER appuser
-
-EXPOSE 3000 5000 8000 80
-
 # -- Health check script --
 RUN printf '#!/bin/bash\n\
 for i in {1..3}; do\n\
@@ -89,6 +83,12 @@ for i in {1..3}; do\n\
   sleep 5\n\
 done\n\
 exit 1\n' > /healthcheck.sh && chmod +x /healthcheck.sh
+
+# -- Create non-root user --
+RUN useradd -m appuser
+USER appuser
+
+EXPOSE 3000 5000 8000 80
 
 HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=3 CMD ["/healthcheck.sh"]
 
