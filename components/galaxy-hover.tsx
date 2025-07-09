@@ -1,39 +1,39 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useRef, useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { useRef, useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
 interface GalaxyHoverProps {
-  children: React.ReactNode
-  className?: string
+  children: React.ReactNode;
+  className?: string;
 }
 
 export function GalaxyHover({ children, className }: GalaxyHoverProps) {
-  const [isHovered, setIsHovered] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [isHovered, setIsHovered] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
+        const rect = containerRef.current.getBoundingClientRect();
         setMousePosition({
           x: e.clientX - rect.left,
           y: e.clientY - rect.top,
-        })
+        });
       }
-    }
+    };
 
     if (isHovered) {
-      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mousemove", handleMouseMove);
     }
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove)
-    }
-  }, [isHovered])
+      document.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [isHovered]);
 
   return (
     <div
@@ -61,18 +61,18 @@ export function GalaxyHover({ children, className }: GalaxyHoverProps) {
               filter: "blur(20px)",
             }}
             animate={{
-              scale: [1, 1.2, 1],
-              rotate: [0, 360],
+              scale: [1, 1.1, 1],
+              rotate: [0, 180],
             }}
             transition={{
-              duration: 3,
+              duration: 2,
               repeat: Number.POSITIVE_INFINITY,
               ease: "linear",
             }}
           />
 
           {/* Floating particles */}
-          {[...Array(12)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <motion.div
               key={i}
               className="absolute w-1 h-1 bg-white/60 rounded-full"
@@ -87,9 +87,9 @@ export function GalaxyHover({ children, className }: GalaxyHoverProps) {
                 y: [0, Math.sin((i * 30 * Math.PI) / 180) * 20],
               }}
               transition={{
-                duration: 2,
+                duration: 1.5,
                 repeat: Number.POSITIVE_INFINITY,
-                delay: i * 0.1,
+                delay: i * 0.05,
               }}
             />
           ))}
@@ -98,5 +98,5 @@ export function GalaxyHover({ children, className }: GalaxyHoverProps) {
 
       {children}
     </div>
-  )
+  );
 }

@@ -446,9 +446,9 @@ export default function Home() {
             >
               {/* Badge */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.8 }}
+                transition={{ delay: 0.1, duration: 0.4 }}
                 className="flex items-center justify-center mb-8"
               >
                 <div className="bg-gradient-to-r from-magenta-500/20 to-pink-500/20 backdrop-blur-xl border border-magenta-400/30 rounded-full px-8 py-4">
@@ -483,7 +483,7 @@ export default function Home() {
                   animate={{
                     backgroundPosition: ["0%", "100%", "0%"],
                   }}
-                  transition={{ duration: 5, repeat: Infinity }}
+                  transition={{ duration: 3, repeat: Infinity }}
                   style={{ backgroundSize: "300% 300%" }}
                 >
                   Placement
@@ -576,7 +576,7 @@ export default function Home() {
                 className="flex flex-col sm:flex-row gap-8 justify-center mb-20"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.2, duration: 0.8 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
               >
                 <motion.div
                   whileHover={{ scale: 1.05 }}
@@ -626,7 +626,7 @@ export default function Home() {
                 className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-6xl mx-auto"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.4, duration: 0.8 }}
+                transition={{ delay: 0.3, duration: 0.4 }}
               >
                 {[
                   {
@@ -658,7 +658,7 @@ export default function Home() {
                     key={index}
                     initial={{ opacity: 0, y: 30, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ delay: 1.6 + index * 0.1, duration: 0.6 }}
+                    transition={{ delay: 0.2 + index * 0.05, duration: 0.3 }}
                     whileHover={{ scale: 1.1, y: -15 }}
                     className="flex flex-col items-center p-10 bg-gray-800/30 rounded-3xl border border-gray-600/50 backdrop-blur-xl hover:bg-gray-700/40 transition-all duration-500 group"
                   >
@@ -854,7 +854,7 @@ export default function Home() {
                           {feature.description}
                         </p>
 
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mt-auto">
                           <div className="flex items-center text-magenta-300 font-semibold group-hover:text-magenta-200 transition-colors">
                             <span>Explore Feature</span>
                             <ChevronRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -1207,13 +1207,13 @@ export default function Home() {
 
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
                 className="absolute top-10 right-10 w-20 h-20 border-2 border-magenta-400/30 rounded-full"
               />
 
               <motion.div
                 animate={{ rotate: -360 }}
-                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
                 className="absolute bottom-10 left-10 w-16 h-16 border-2 border-pink-400/30 rounded-full"
               />
 
@@ -1294,7 +1294,7 @@ export default function Home() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-magenta-600 to-pink-600 rounded-full flex items-center justify-center shadow-2xl z-50 hover:shadow-magenta-500/50 transition-all duration-300"
+          className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-magenta-600 to-pink-600 rounded-full flex items-center justify-center shadow-2xl z-50 hover:shadow-magenta-500/50 transition-all duration-150"
         >
           <ArrowUp className="h-8 w-8 text-white" />
         </motion.button>
