@@ -9,17 +9,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4  # Updated version
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
-    - name: Install dependencies
+    - name: Install dependencies with retry logic
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install --timeout=1000 --retries=5 --index-url https://pypi.org/simple/ -r requirements.txt
 
     - name: Test FastAPI app
       run: |
@@ -33,7 +33,7 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Clean up Docker space on runner
       run: |
@@ -44,7 +44,7 @@ jobs:
       run: |
         echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         echo "🐳 Building complete PlacementPro image..."
-        docker build -t "$DOCKER_USERNAME/placementpro:latest" .
+        docker build --network=host -t "$DOCKER_USERNAME/placementpro:latest" .
         echo "📤 Pushing Docker image..."
         docker push "$DOCKER_USERNAME/placementpro:latest"
         echo "✅ Docker image pushed successfully"
@@ -54,24 +54,31 @@ jobs:
       run: |
         cat > deploy.sh << 'EOL'
         #!/bin/bash
+        set -e
+        
         echo "🧹 Cleaning up disk space on EC2 instance..."
-        sudo docker system prune -af --volumes
-        sudo journalctl --vacuum-time=2d
+        sudo docker system prune -af --volumes || true
+        sudo journalctl --vacuum-time=2d || true
         df -h
 
-        set -e
         cd /home/ec2-user/placementpro || (mkdir -p /home/ec2-user/placementpro && cd /home/ec2-user/placementpro)
 
         echo "🛑 Stopping and removing old container and processes..."
         sudo docker stop placementpro 2>/dev/null || true
         sudo docker rm placementpro 2>/dev/null || true
+        
+        # More robust port cleanup
         for port in 3000 5000 8000 80; do
-          sudo lsof -ti:$port | xargs -r sudo kill -9 2>/dev/null || true
+          if sudo lsof -ti:$port 2>/dev/null; then
+            echo "Killing processes on port $port"
+            sudo lsof -ti:$port | xargs -r sudo kill -9 2>/dev/null || true
+          fi
         done
 
         echo "📥 Pulling latest Docker image..."
         sudo docker pull $1/placementpro:latest
 
+        # Create required directories
         mkdir -p temp static/reports static/summaries static/transcripts
 
         echo "🚀 Starting new PlacementPro container..."
@@ -86,27 +93,35 @@ jobs:
           --restart unless-stopped \
           --memory="3g" \
           --cpus="2.0" \
+          --health-cmd="curl -f http://localhost:8000/api/health || exit 1" \
+          --health-interval=30s \
+          --health-timeout=10s \
+          --health-retries=3 \
           $1/placementpro:latest
 
         if [ $? -ne 0 ]; then
           echo "❌ Container failed to start. Checking logs and port conflicts..."
-          sudo lsof -i:3000 || echo "Port 3000 is free"
-          sudo lsof -i:5000 || echo "Port 5000 is free"
-          sudo lsof -i:8000 || echo "Port 8000 is free"
+          for port in 3000 5000 8000; do
+            if sudo lsof -i:$port 2>/dev/null; then
+              echo "❌ Port $port is still in use"
+              sudo lsof -i:$port
+            else
+              echo "✅ Port $port is free"
+            fi
+          done
           sudo docker logs placementpro 2>/dev/null || echo "No logs available for failed container."
           exit 1
         fi
 
         echo "⏳ Waiting for container to become healthy..."
-        for i in {1..15}; do
-          HEALTH_STATUS=$(sudo docker inspect --format '{{.State.Health.Status}}' placementpro)
-          if [ "$HEALTH_STATUS" = "healthy" ]; then
+        for i in {1..20}; do
+          if [ "$(sudo docker inspect --format '{{.State.Health.Status}}' placementpro 2>/dev/null)" = "healthy" ]; then
             echo "✅ Container is healthy!"
             break
           fi
-          echo "Container status is '$HEALTH_STATUS'. Waiting... (Attempt $i/15)"
-          sleep 10
-          if [ $i -eq 15 ]; then
+          echo "Container health check... (Attempt $i/20)"
+          sleep 15
+          if [ $i -eq 20 ]; then
             echo "❌ Container did not become healthy in time."
             sudo docker logs placementpro --tail 50
             exit 1
@@ -114,17 +129,18 @@ jobs:
         done
 
         echo "🧪 Testing all services..."
+        
         # Backend health check
         echo "🔧 Testing Backend API..."
-        for i in {1..10}; do
+        for i in {1..12}; do
           if curl -f -s http://localhost:8000/api/health > /dev/null; then
             echo "✅ Backend API: Working!"
             break
           fi
-          echo "⏳ Backend API attempt $i/10..."
+          echo "⏳ Backend API attempt $i/12..."
           sleep 10
-          if [ $i -eq 10 ]; then
-            echo "❌ Backend API failed after 10 attempts"
+          if [ $i -eq 12 ]; then
+            echo "❌ Backend API failed after 12 attempts"
             sudo docker logs placementpro --tail 50
             exit 1
           fi
@@ -132,27 +148,29 @@ jobs:
 
         # Frontend health check
         echo "🎨 Testing Frontend..."
-        for i in {1..8}; do
+        for i in {1..10}; do
           if curl -f -s http://localhost:3000 > /dev/null; then
             echo "✅ Frontend: Working!"
             break
           fi
-          echo "⏳ Frontend attempt $i/8..."
+          echo "⏳ Frontend attempt $i/10..."
           sleep 15
         done
 
         # Chat server health check
         echo "💬 Testing Chat Server..."
-        for i in {1..5}; do
-          # We just check if the port is open, as websockets might not return a simple 200 OK
-          if nc -z localhost 5000; then
+        for i in {1..8}; do
+          if command -v nc >/dev/null 2>&1 && nc -z localhost 5000; then
             echo "✅ Chat Server: Port is open!"
             break
+          elif timeout 5 bash -c "</dev/tcp/localhost/5000" 2>/dev/null; then
+            echo "✅ Chat Server: Port is accessible!"
+            break
           fi
-          echo "⏳ Chat server attempt $i/5..."
+          echo "⏳ Chat server attempt $i/8..."
           sleep 10
-          if [ $i -eq 5 ]; then
-            echo "⚠️ Chat Server did not respond."
+          if [ $i -eq 8 ]; then
+            echo "⚠️ Chat Server port check inconclusive."
           fi
         done
 
@@ -165,7 +183,7 @@ jobs:
         sudo docker stats placementpro --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
         echo ""
         echo "📋 Recent Service Logs:"
-        sudo docker logs placementpro --tail 20
+        sudo docker logs placementpro --tail 30
 
         echo ""
         echo "🎉 Complete PlacementPro platform deployed successfully!"
@@ -173,13 +191,14 @@ jobs:
         echo "🌐 MAIN WEBSITE: http://$2"
         echo "📖 API Documentation: http://$2:8000/docs"
         echo "🏥 Health Check: http://$2:8000/api/health"
+        echo "💬 Chat Server: ws://$2:5000"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         EOL
         chmod +x deploy.sh
 
     # Deploy using SSH with a more reliable action
     - name: Deploy to EC2
-      uses: easingthemes/ssh-deploy@main
+      uses: easingthemes/ssh-deploy@v4.1.10
       with:
         SSH_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
         REMOTE_HOST: ${{ secrets.EC2_HOST }}

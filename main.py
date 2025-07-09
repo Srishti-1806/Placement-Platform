@@ -195,82 +195,24 @@ def start_chat_server():
         print(f"Failed to start chat server: {e}")
         return None
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 async def serve_homepage():
-    """Serve Next.js frontend or fallback page"""
-    try:
-        frontend_path = Path(".next/server/pages/index.html")
-        if frontend_path.exists():
-            with open(frontend_path, "r", encoding="utf-8") as f:
-                return HTMLResponse(content=f.read())
-        else:
-            # Fallback to a landing page that redirects to frontend port
-            return HTMLResponse(content=f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>PlacementPro - Loading...</title>
-                <style>
-                    body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }}
-                    .container {{ max-width: 800px; margin: 0 auto; padding: 40px; background: rgba(255,255,255,0.1); border-radius: 15px; backdrop-filter: blur(10px); }}
-                    .loading {{ animation: pulse 2s infinite; }}
-                    @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} }}
-                    .status {{ margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; }}
-                    .success {{ color: #10b981; }}
-                    .error {{ color: #ef4444; }}
-                    a {{ color: #67e8f9; text-decoration: none; margin: 0 10px; }}
-                </style>
-                <script>
-                    let attempts = 0;
-                    const maxAttempts = 20;
-                    function checkFrontend() {{
-                        attempts++;
-                        fetch('{FRONTEND_URL}')
-                            .then(response => {{
-                                if (response.ok) {{
-                                    window.location.href = '{FRONTEND_URL}';
-                                }} else {{
-                                    throw new Error('Frontend not ready');
-                                }}
-                            }})
-                            .catch(error => {{
-                                if (attempts < maxAttempts) {{
-                                    document.getElementById('status').innerHTML = 
-                                        `<div class="loading">🔄 Loading frontend... (Attempt ${{attempts}}/${{maxAttempts}})</div>`;
-                                    setTimeout(checkFrontend, 3000);
-                                }} else {{
-                                    document.getElementById('status').innerHTML = 
-                                        `<div class="error">❌ Frontend failed to load. <a href='{FRONTEND_URL}'>Try directly</a></div>`;
-                                }}
-                            }});
-                    }}
-                    setTimeout(checkFrontend, 5000);
-                </script>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>PlacementPro</h1>
-                    <h2>Your AI-Powered Career Assistant Platform</h2>
-                    <div id="status" class="status loading">
-                        ⏳ Starting all services...
-                    </div>
-                    <div class="status">
-                        <div class="success">Backend API: Running</div>
-                        <div>Frontend: Loading...</div>
-                        <div>Chat Server: Starting...</div>
-                    </div>
-                    <div>
-                        <a href="{FRONTEND_URL}">Frontend</a>
-                        <a href="{BACKEND_URL}/docs">API Docs</a>
-                        <a href="{CHAT_URL}">Chat</a>
-                        <a href="{BACKEND_URL}/api/health">Health Check</a>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """)
-    except Exception as e:
-        return {"message": "PlacementPro API is running successfully!", "error": str(e)}
+    """Simple API endpoint - no HTML redirect"""
+    return {
+        "message": "PlacementPro Backend API",
+        "version": "1.0.0",
+        "status": "running",
+        "endpoints": {
+            "health": "/api/health",
+            "docs": "/docs",
+            "redoc": "/redoc"
+        },
+        "services": {
+            "frontend": FRONTEND_URL,
+            "chat": CHAT_URL,
+            "backend": BACKEND_URL
+        }
+    }
 
 @app.get("/api/health")
 async def health_check():

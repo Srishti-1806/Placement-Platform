@@ -1,21 +1,7 @@
 "use client";
 
-<<<<<<< HEAD
-import type React from "react"
-import { Suspense } from "react" // Add Suspense import
-import "./globals.css"
-import { Header } from "@/components/header"
-import { GalaxyBackground } from "@/components/galaxy-background"
-import { FloatingOrbs } from "@/components/floating-orbs"
-import SplashCursor from "@/components/splash-cursor"
-import CommunityChat from "@/components/community-chat"
-import { SettingsProvider, useSettings } from "@/contexts/settings-context"
-import { AuthProvider } from "@/contexts/auth-context"
-import { SettingsPanel } from "@/components/settings-panel"
-import { FeaturesSidebar } from "@/components/features-sidebar"
-=======
 import type React from "react";
-// import type { Metadata } from "next"
+import { Suspense } from "react"; // Add Suspense import
 import "./globals.css";
 import { Header } from "@/components/header";
 import { GalaxyBackground } from "@/components/galaxy-background";
@@ -26,26 +12,25 @@ import { SettingsProvider, useSettings } from "@/contexts/settings-context";
 import { AuthProvider } from "@/contexts/auth-context";
 import { SettingsPanel } from "@/components/settings-panel";
 import { FeaturesSidebar } from "@/components/features-sidebar";
->>>>>>> 86f21e63f98536dd215fb6be9d8e8f23d1016a9b
 
 // Add this to prevent static prerendering
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
 // Loading components for Suspense
 function HeaderLoading() {
-  return <div className="h-16 bg-gray-800/50 animate-pulse rounded-lg" />
+  return <div className="h-16 bg-gray-800/50 animate-pulse rounded-lg" />;
 }
 
 function SidebarLoading() {
-  return <div className="w-64 h-screen bg-gray-800/30 animate-pulse" />
+  return <div className="w-64 h-screen bg-gray-800/30 animate-pulse" />;
 }
 
 function ChatLoading() {
-  return <div className="fixed bottom-4 right-4 w-12 h-12 bg-gray-800 rounded-full animate-pulse" />
+  return <div className="fixed bottom-4 right-4 w-12 h-12 bg-gray-800 rounded-full animate-pulse" />;
 }
 
 function SettingsLoading() {
-  return <div className="fixed top-4 right-4 w-8 h-8 bg-gray-800 rounded animate-pulse" />
+  return <div className="fixed top-4 right-4 w-8 h-8 bg-gray-800 rounded animate-pulse" />;
 }
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -53,29 +38,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
-<<<<<<< HEAD
-      {galaxyEnabled && <GalaxyBackground />}
-      <FloatingOrbs />
-      <SplashCursor
-        DENSITY_DISSIPATION={2}
-        VELOCITY_DISSIPATION={1.5}
-        SPLAT_FORCE={4000}
-        COLOR_UPDATE_SPEED={20}
-        BACK_COLOR={{ r: 0.1, g: 0.1, b: 0.2 }}
-      />
-      
-      {/* Wrap Header in Suspense - likely culprit */}
-      <Suspense fallback={<HeaderLoading />}>
-        <Header />
-      </Suspense>
-      
-      {/* Wrap FeaturesSidebar in Suspense */}
-      <Suspense fallback={<SidebarLoading />}>
-        <FeaturesSidebar />
-      </Suspense>
-      
-      {/* Main content doesn't need a Suspense wrapper */}
-=======
       {isMounted && galaxyEnabled && <GalaxyBackground />}
       {isMounted && <FloatingOrbs />}
       {isMounted && (
@@ -87,9 +49,18 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           BACK_COLOR={{ r: 0.1, g: 0.1, b: 0.2 }}
         />
       )}
-      <Header />
-      <FeaturesSidebar />
->>>>>>> 86f21e63f98536dd215fb6be9d8e8f23d1016a9b
+      
+      {/* Wrap Header in Suspense */}
+      <Suspense fallback={<HeaderLoading />}>
+        <Header />
+      </Suspense>
+      
+      {/* Wrap FeaturesSidebar in Suspense */}
+      <Suspense fallback={<SidebarLoading />}>
+        <FeaturesSidebar />
+      </Suspense>
+      
+      {/* Main content */}
       {children}
       
       {/* Wrap CommunityChat in Suspense */}
