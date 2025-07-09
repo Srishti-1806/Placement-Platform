@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+
 export function FloatingOrbs() {
   const [orbs, setOrbs] = useState<
     {
@@ -11,26 +12,27 @@ export function FloatingOrbs() {
       color: string;
     }[]
   >([]);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     if (typeof window !== "undefined") {
-      const generatedOrbs = Array.from({ length: 6 }, (_, i) => ({
+      // Use consistent seed-like values to reduce randomness
+      const generatedOrbs = Array.from({ length: 3 }, (_, i) => ({
         id: i,
-        size: Math.random() * 100 + 50,
-        initialX: Math.random() * window.innerWidth,
-        initialY: Math.random() * window.innerHeight,
-        color: [
-          "#10b981",
-          "#059669",
-          "#34d399",
-          "#047857",
-          "#22c55e",
-          "#16a34a",
-        ][i],
+        size: 60 + i * 20, // Consistent sizes
+        initialX: (window.innerWidth / 4) * (i + 1), // Evenly spaced
+        initialY: window.innerHeight / 3 + i * 100, // Consistent positioning
+        color: ["#10b981", "#059669", "#34d399"][i],
       }));
       setOrbs(generatedOrbs);
     }
   }, []);
+
+  // Don't render anything until mounted on client
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: -1 }}>
@@ -46,19 +48,19 @@ export function FloatingOrbs() {
           animate={{
             x: [
               orb.initialX,
-              orb.initialX + 200,
-              orb.initialX - 200,
+              orb.initialX + 100,
+              orb.initialX - 100,
               orb.initialX,
             ],
             y: [
               orb.initialY,
-              orb.initialY - 100,
-              orb.initialY + 100,
+              orb.initialY - 50,
+              orb.initialY + 50,
               orb.initialY,
             ],
           }}
           transition={{
-            duration: 20 + Math.random() * 10,
+            duration: 20, // Consistent duration
             repeat: Number.POSITIVE_INFINITY,
             ease: "linear",
           }}

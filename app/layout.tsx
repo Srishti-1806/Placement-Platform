@@ -1,5 +1,6 @@
-"use client"
+"use client";
 
+<<<<<<< HEAD
 import type React from "react"
 import { Suspense } from "react" // Add Suspense import
 import "./globals.css"
@@ -12,6 +13,20 @@ import { SettingsProvider, useSettings } from "@/contexts/settings-context"
 import { AuthProvider } from "@/contexts/auth-context"
 import { SettingsPanel } from "@/components/settings-panel"
 import { FeaturesSidebar } from "@/components/features-sidebar"
+=======
+import type React from "react";
+// import type { Metadata } from "next"
+import "./globals.css";
+import { Header } from "@/components/header";
+import { GalaxyBackground } from "@/components/galaxy-background";
+import { FloatingOrbs } from "@/components/floating-orbs";
+import SplashCursor from "@/components/splash-cursor";
+import CommunityChat from "@/components/community-chat";
+import { SettingsProvider, useSettings } from "@/contexts/settings-context";
+import { AuthProvider } from "@/contexts/auth-context";
+import { SettingsPanel } from "@/components/settings-panel";
+import { FeaturesSidebar } from "@/components/features-sidebar";
+>>>>>>> 86f21e63f98536dd215fb6be9d8e8f23d1016a9b
 
 // Add this to prevent static prerendering
 export const dynamic = 'force-dynamic'
@@ -34,10 +49,11 @@ function SettingsLoading() {
 }
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
-  const { galaxyEnabled } = useSettings()
+  const { isMounted, galaxyEnabled } = useSettings();
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
+<<<<<<< HEAD
       {galaxyEnabled && <GalaxyBackground />}
       <FloatingOrbs />
       <SplashCursor
@@ -59,6 +75,21 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       </Suspense>
       
       {/* Main content doesn't need a Suspense wrapper */}
+=======
+      {isMounted && galaxyEnabled && <GalaxyBackground />}
+      {isMounted && <FloatingOrbs />}
+      {isMounted && (
+        <SplashCursor
+          DENSITY_DISSIPATION={2}
+          VELOCITY_DISSIPATION={1.5}
+          SPLAT_FORCE={4000}
+          COLOR_UPDATE_SPEED={20}
+          BACK_COLOR={{ r: 0.1, g: 0.1, b: 0.2 }}
+        />
+      )}
+      <Header />
+      <FeaturesSidebar />
+>>>>>>> 86f21e63f98536dd215fb6be9d8e8f23d1016a9b
       {children}
       
       {/* Wrap CommunityChat in Suspense */}
@@ -71,13 +102,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         <SettingsPanel />
       </Suspense>
     </div>
-  )
+  );
 }
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="en">
@@ -89,5 +120,5 @@ export default function RootLayout({
         </AuthProvider>
       </body>
     </html>
-  )
+  );
 }

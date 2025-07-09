@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut } from "lucide-react";
@@ -25,7 +25,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+<<<<<<< HEAD
 export function Header() {
+=======
+function HeaderInternal() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+>>>>>>> 86f21e63f98536dd215fb6be9d8e8f23d1016a9b
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const { playSound } = useSound();
@@ -186,4 +192,39 @@ export function Header() {
   );
 }
 
+<<<<<<< HEAD
 export default Header;
+=======
+// Header loading component
+function HeaderLoading() {
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <div className="w-32 h-8 bg-gray-700 animate-pulse rounded"></div>
+          </div>
+          <div className="hidden md:flex space-x-8">
+            <div className="w-16 h-6 bg-gray-700 animate-pulse rounded"></div>
+            <div className="w-16 h-6 bg-gray-700 animate-pulse rounded"></div>
+            <div className="w-16 h-6 bg-gray-700 animate-pulse rounded"></div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="w-20 h-8 bg-gray-700 animate-pulse rounded"></div>
+            <div className="w-20 h-8 bg-gray-700 animate-pulse rounded"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// Main Header export with Suspense wrapper
+export function Header() {
+  return (
+    <Suspense fallback={<HeaderLoading />}>
+      <HeaderInternal />
+    </Suspense>
+  );
+}
+>>>>>>> 86f21e63f98536dd215fb6be9d8e8f23d1016a9b
