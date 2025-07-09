@@ -29,7 +29,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN python -m venv /opt/venv && \
     /opt/venv/bin/pip install --upgrade pip && \
-    /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+    /opt/venv/bin/pip install --timeout=1000 --no-cache-dir -r requirements.txt
 
 # Copy all backend source (since you don't have a /backend folder)
 COPY . .
@@ -38,10 +38,13 @@ COPY . .
 FROM python:3.11-slim
 
 # -- System dependencies --
+# -- System dependencies --
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         supervisor \
         curl \
+        nodejs \
+        npm \
     && rm -rf /var/lib/apt/lists/*
 
 # -- Copy Python environment and backend --

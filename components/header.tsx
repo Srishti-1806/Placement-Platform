@@ -25,13 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-<<<<<<< HEAD
-export function Header() {
-=======
 function HeaderInternal() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
->>>>>>> 86f21e63f98536dd215fb6be9d8e8f23d1016a9b
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const { playSound } = useSound();
@@ -96,8 +90,8 @@ function HeaderInternal() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full" onClick={() => playSound("click")}>
                   <Avatar>
-                    <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
-                    <AvatarFallback>{user.displayName?.charAt(0) || "U"}</AvatarFallback>
+                    <AvatarImage src={user.avatar || undefined} alt={user.name || "User"} />
+                    <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
@@ -192,9 +186,6 @@ function HeaderInternal() {
   );
 }
 
-<<<<<<< HEAD
-export default Header;
-=======
 // Header loading component
 function HeaderLoading() {
   return (
@@ -227,4 +218,3 @@ export function Header() {
     </Suspense>
   );
 }
->>>>>>> 86f21e63f98536dd215fb6be9d8e8f23d1016a9b
