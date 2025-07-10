@@ -8,6 +8,8 @@ on:
       - 'Dockerfile'
       - 'requirements.txt'
       - 'package.json'
+      - 'supervisord.conf'
+      - '*.py'
 
 jobs:
   build:
@@ -32,6 +34,7 @@ jobs:
         tags: ${{ secrets.DOCKER_USERNAME }}/placementpro:latest
         platforms: linux/amd64,linux/arm64
 
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -39,81 +42,162 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Create optimized deployment script
-      run: |
-        cat > deploy.sh << 'EOL'
-        #!/bin/bash
-        set -e
-        
-        DOCKER_USERNAME=$1
-        HOST_IP=$2
-        
-        echo "🚀 Starting fast PlacementPro deployment on $HOST_IP..."
-        
-        # Quick cleanup
-        sudo docker stop placementpro 2>/dev/null || true
-        sudo docker rm placementpro 2>/dev/null || true
-        
-        # Clean up old images to save space
-        sudo docker image prune -f || true
-        
-        # Kill any processes on required ports
-        for port in 3000 5000 8000 80; do
-          sudo lsof -ti:$port 2>/dev/null | xargs -r sudo kill -9 2>/dev/null || true
-        done
-        
-        echo "📥 Pulling pre-built multi-architecture image..."
-        sudo docker pull $DOCKER_USERNAME/placementpro:latest
-        
-        # Create required directories
-        mkdir -p /home/ec2-user/placementpro/{temp,static/reports,static/summaries,static/transcripts}
-        cd /home/ec2-user/placementpro
-        
-        echo "🚀 Starting PlacementPro container with optimized settings..."
-        sudo docker run -d \
-          --name placementpro \
-          -p 80:3000 -p 3000:3000 -p 5000:5000 -p 8000:8000 \
-          -v $(pwd)/temp:/app/temp \
-          -v $(pwd)/static:/app/static \
-          --restart unless-stopped \
-          --memory="1200m" \
-          --cpus="1.0" \
-          --health-cmd="curl -f http://localhost:8000/api/health || exit 1" \
-          --health-interval=30s \
-          --health-timeout=10s \
-          --health-retries=3 \
-          $DOCKER_USERNAME/placementpro:latest
-        
-        if [ $? -ne 0 ]; then
-          echo "❌ Container failed to start"
-          sudo docker logs placementpro 2>/dev/null || echo "No logs available"
-          exit 1
-        fi
-        
-        echo "⏳ Waiting for services to start..."
-        sleep 45
-        
-        # Health checks
-        echo "🏥 Health checks..."
-        
-        timeout 10 curl -f http://localhost:3000 > /dev/null && echo "✅ Frontend: OK" || echo "⚠️ Frontend: Starting..."
-        timeout 10 curl -f http://localhost:8000/api/health > /dev/null && echo "✅ Backend: OK" || echo "⚠️ Backend: Starting..."
-        timeout 5 curl -f http://localhost:5000 > /dev/null && echo "✅ Chat Server: OK" || echo "⚠️ Chat Server: Starting..."
-        
-        echo ""
-        echo "🎉 PlacementPro deployment complete!"
-        echo "🌐 MAIN WEBSITE: http://$HOST_IP"
-        echo "📖 API Documentation: http://$HOST_IP:8000/docs"
-        echo "💬 Chat Server: http://$HOST_IP:5000"
-        EOL
-        chmod +x deploy.sh
-
     - name: Deploy to EC2
-      uses: easingthemes/ssh-deploy@v4.1.10
+      uses: appleboy/ssh-action@v1.0.3
       with:
-        SSH_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-        REMOTE_HOST: ${{ secrets.EC2_HOST }}
-        REMOTE_USER: ec2-user
-        SOURCE: "deploy.sh"
-        TARGET: "/home/ec2-user"
-        SCRIPT_AFTER: "cd /home/ec2-user && bash deploy.sh ${{ secrets.DOCKER_USERNAME }} ${{ secrets.EC2_HOST }}"
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        port: 22
+        timeout: 60s
+        script: |
+          set -e
+          
+          DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+          HOST_IP="${{ secrets.EC2_HOST }}"
+          
+          echo "🚀 Starting PlacementPro deployment on $HOST_IP..."
+          
+          # Install Docker if not present
+          if ! command -v docker &> /dev/null; then
+            echo "📦 Installing Docker..."
+            # Check OS and install accordingly
+            if [ -f /etc/os-release ]; then
+              . /etc/os-release
+              if [[ "$ID" == "amzn" ]]; then
+                sudo yum update -y
+                sudo yum install -y docker
+              elif [[ "$ID" == "ubuntu" ]]; then
+                sudo apt-get update
+                sudo apt-get install -y docker.io
+              fi
+            fi
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker ec2-user
+            echo "🔄 Docker installed. Group changes will take effect on next login."
+          fi
+          
+          # Ensure Docker is running
+          sudo systemctl start docker
+          
+          # Check network connectivity
+          echo "🌐 Checking network connectivity..."
+          if ! curl -sSf http://google.com > /dev/null 2>&1; then
+            echo "❌ No internet connection. Cannot pull Docker image."
+            exit 1
+          fi
+          
+          # Quick cleanup
+          echo "🧹 Cleaning up old containers..."
+          sudo docker stop placementpro 2>/dev/null || true
+          sudo docker rm placementpro 2>/dev/null || true
+          
+          # Clean up old images to save space
+          sudo docker image prune -f || true
+          
+          # Kill any processes on required ports
+          echo "🔌 Freeing up ports..."
+          for port in 3000 5000 8000 80; do
+            pid=$(sudo lsof -ti:$port 2>/dev/null || true)
+            if [ ! -z "$pid" ]; then
+              echo "Killing process $pid on port $port"
+              sudo kill -9 $pid 2>/dev/null || true
+            fi
+          done
+          
+          echo "📥 Pulling latest image..."
+          if ! sudo docker pull $DOCKER_USERNAME/placementpro:latest; then
+            echo "❌ Failed to pull Docker image"
+            exit 1
+          fi
+          
+          # Create required directories
+          echo "📁 Creating directories..."
+          mkdir -p /home/ec2-user/placementpro/{temp,static/reports,static/summaries,static/transcripts,logs}
+          cd /home/ec2-user/placementpro
+          
+          echo "🚀 Starting PlacementPro container..."
+          sudo docker run -d \
+            --name placementpro \
+            -p 80:3000 -p 3000:3000 -p 5000:5000 -p 8000:8000 \
+            -v $(pwd)/temp:/app/temp \
+            -v $(pwd)/static:/app/static \
+            -v $(pwd)/logs:/app/logs \
+            --restart unless-stopped \
+            --memory="1400m" \
+            --cpus="1.2" \
+            --health-cmd="curl -f http://localhost:8000/api/health || exit 1" \
+            --health-interval=30s \
+            --health-timeout=15s \
+            --health-retries=3 \
+            --health-start-period=60s \
+            --log-driver=json-file \
+            --log-opt max-size=10m \
+            --log-opt max-file=3 \
+            $DOCKER_USERNAME/placementpro:latest
+          
+          if [ $? -ne 0 ]; then
+            echo "❌ Container failed to start"
+            sudo docker logs placementpro 2>/dev/null || echo "No logs available"
+            exit 1
+          fi
+          
+          echo "⏳ Waiting for services to initialize..."
+          sleep 60
+          
+          # Enhanced health checks
+          echo "🏥 Performing health checks..."
+          
+          # Check if container is running
+          if ! sudo docker ps | grep -q placementpro; then
+            echo "❌ Container is not running"
+            sudo docker logs placementpro
+            exit 1
+          fi
+          
+          # Check frontend
+          if timeout 15 curl -f http://localhost:3000 > /dev/null 2>&1; then
+            echo "✅ Frontend (Port 3000): OK"
+          else
+            echo "⚠️ Frontend (Port 3000): Starting or not ready"
+          fi
+          
+          # Check backend API
+          if timeout 15 curl -f http://localhost:8000/api/health > /dev/null 2>&1; then
+            echo "✅ Backend API (Port 8000): OK"
+          else
+            echo "⚠️ Backend API (Port 8000): Starting or not ready"
+          fi
+          
+          # Check chat server
+          if timeout 10 curl -f http://localhost:5000 > /dev/null 2>&1; then
+            echo "✅ Chat Server (Port 5000): OK"
+          else
+            echo "⚠️ Chat Server (Port 5000): Starting or not ready"
+          fi
+          
+          # Check main website (port 80)
+          if timeout 15 curl -f http://localhost > /dev/null 2>&1; then
+            echo "✅ Main Website (Port 80): OK"
+          else
+            echo "⚠️ Main Website (Port 80): Starting or not ready"
+          fi
+          
+          echo ""
+          echo "🎉 PlacementPro deployment complete!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🌐 MAIN WEBSITE: http://$HOST_IP"
+          echo "📖 API Documentation: http://$HOST_IP:8000/docs"
+          echo "💬 Chat Server: http://$HOST_IP:5000"
+          echo "🔧 Direct Frontend: http://$HOST_IP:3000"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "📊 Container Status:"
+          sudo docker ps --filter name=placementpro --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          echo ""
+          echo "💾 Disk Usage:"
+          df -h /home/ec2-user/placementpro || true
+          echo ""
+          echo "🏥 Container Health:"
+          sudo docker inspect placementpro --format='{{.State.Health.Status}}' 2>/dev/null || echo "Health check pending..."
