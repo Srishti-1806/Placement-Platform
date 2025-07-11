@@ -607,17 +607,7 @@ export default function Home() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="h-12 px-8 text-base font-semibold border-2 border-magenta-400 text-magenta-300 hover:bg-magenta-400 hover:text-white backdrop-blur-xl"
-                    asChild
-                  >
-                    <Link href="/demo">
-                      <Play className="mr-4 h-8 w-8" />
-                      Watch Demo
-                    </Link>
-                  </Button>
+
                 </motion.div>
               </motion.div>
 

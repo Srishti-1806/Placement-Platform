@@ -35,6 +35,15 @@ function HeaderInternal() {
     setIsMenuOpen(false);
   }, []);
 
+
+  const handleMenuToggle = () => {
+    const nextState = !isMenuOpen;
+    setIsMenuOpen(nextState);
+    playSound(nextState ? ("open" as any) : ("close" as any));
+
+  };
+
+
   const handleLogout = () => {
     playSound("click");
     logout();
