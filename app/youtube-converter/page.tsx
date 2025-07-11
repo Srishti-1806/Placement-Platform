@@ -78,16 +78,14 @@ export default function YouTubeConverterPage() {
     try {
       console.log("Starting YouTube transcription for:", url);
 
-      const response = await fetch(
-        "http://localhost:8000/api/youtube-transcript",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ url: url.trim() }),
+      // Use Next.js API route (which uses env variable for backend)
+      const response = await fetch("/api/youtube-transcript", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({ url: url.trim() }),
+      });
 
       const result = await response.json();
 
@@ -335,33 +333,6 @@ export default function YouTubeConverterPage() {
               </Card>
             </motion.div>
           ))}
-        </motion.div>
-
-        {/* Backend Status Alert */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 1.2, duration: 0.5 }}
-        >
-          <Alert className="mb-8 bg-gradient-to-r from-blue-900/60 to-purple-900/60 border border-blue-500/50 backdrop-blur-xl shadow-lg hover:shadow-blue-500/20 transition-all duration-300">
-            <motion.div
-              animate={{ rotate: [0, 360] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="text-blue-400"
-            >
-              <Server className="h-5 w-5" />
-            </motion.div>
-            <AlertDescription className="text-blue-100 ml-2">
-              <strong className="text-cyan-300">Server Status:</strong> Make
-              sure the Python backend server is running on port 8000 for YouTube
-              transcription to work.
-              <br />
-              <span className="text-gray-300">Run:</span>{" "}
-              <code className="bg-gray-800/80 px-3 py-1 rounded-md text-sm text-cyan-300 border border-gray-600">
-                python main.py
-              </code>
-            </AlertDescription>
-          </Alert>
         </motion.div>
 
         <AnimatePresence>

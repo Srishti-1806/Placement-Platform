@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-// import type { Metadata } from "next"
+import { Suspense } from "react"; // Add Suspense import
 import "./globals.css";
 import { Header } from "@/components/header";
 import { GalaxyBackground } from "@/components/galaxy-background";
@@ -13,11 +13,25 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { SettingsPanel } from "@/components/settings-panel";
 import { FeaturesSidebar } from "@/components/features-sidebar";
 
-// export const metadata: Metadata = {
-//   title: "PlacementPro - Your Complete Placement Solution",
-//   description: "AI-powered placement preparation platform with speech analysis, resume builder, and community support",
-//   generator: "v0.dev",
-// }
+// Add this to prevent static prerendering
+export const dynamic = 'force-dynamic';
+
+// Loading components for Suspense
+function HeaderLoading() {
+  return <div className="h-16 bg-gray-800/50 animate-pulse rounded-lg" />;
+}
+
+function SidebarLoading() {
+  return <div className="w-64 h-screen bg-gray-800/30 animate-pulse" />;
+}
+
+function ChatLoading() {
+  return <div className="fixed bottom-4 right-4 w-12 h-12 bg-gray-800 rounded-full animate-pulse" />;
+}
+
+function SettingsLoading() {
+  return <div className="fixed top-4 right-4 w-8 h-8 bg-gray-800 rounded animate-pulse" />;
+}
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { isMounted, galaxyEnabled } = useSettings();
@@ -35,11 +49,29 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           BACK_COLOR={{ r: 0.1, g: 0.1, b: 0.2 }}
         />
       )}
-      <Header />
-      <FeaturesSidebar />
+      
+      {/* Wrap Header in Suspense */}
+      <Suspense fallback={<HeaderLoading />}>
+        <Header />
+      </Suspense>
+      
+      {/* Wrap FeaturesSidebar in Suspense */}
+      <Suspense fallback={<SidebarLoading />}>
+        <FeaturesSidebar />
+      </Suspense>
+      
+      {/* Main content */}
       {children}
-      <CommunityChat />
-      <SettingsPanel />
+      
+      {/* Wrap CommunityChat in Suspense */}
+      <Suspense fallback={<ChatLoading />}>
+        <CommunityChat />
+      </Suspense>
+      
+      {/* Wrap SettingsPanel in Suspense */}
+      <Suspense fallback={<SettingsLoading />}>
+        <SettingsPanel />
+      </Suspense>
     </div>
   );
 }

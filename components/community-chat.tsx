@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-
+import * as React from "react"
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,45 +21,51 @@ export default function CommunityChat() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
-  const [isConnected, setIsConnected] = useState(false)
   const [onlineUsers, setOnlineUsers] = useState(0)
   const socketRef = useRef<Socket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
-    // Initialize Socket.IO connection
-    socketRef.current = io("http://localhost:5000", {
-      transports: ["websocket", "polling"],
+    // Only run on client
+    if (typeof window === "undefined") return
+
+    const CHAT_WS_URL = process.env.NEXT_PUBLIC_CHAT_WS_URL || "ws://localhost:5000"
+    const socket = io(CHAT_WS_URL, {
+      transports: ['websocket'],
+      withCredentials: false,
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     })
 
-    socketRef.current.on("connect", () => {
+    socket.on("connect", () => {
       setIsConnected(true)
-      console.log("🟢 Connected to chat server")
     })
 
-    socketRef.current.on("disconnect", () => {
+    socket.on("disconnect", () => {
       setIsConnected(false)
-      console.log("🔴 Disconnected from chat server")
     })
 
-    socketRef.current.on("message", (msg: string) => {
+    socket.on("message", (msg: { text: string; user?: string; timestamp?: string } | string) => {
       const newMsg: Message = {
         id: Date.now().toString(),
-        text: msg,
-        timestamp: new Date(),
-        user: "Anonymous",
+        text: typeof msg === "string" ? msg : msg.text,
+        timestamp: typeof msg === "string" ? new Date() : (msg.timestamp ? new Date(msg.timestamp) : new Date()),
+        user: typeof msg === "string" ? "Anonymous" : (msg.user || "Anonymous"),
       }
       setMessages((prev) => [...prev, newMsg])
     })
 
-    socketRef.current.on("user_count", (count: number) => {
+    socket.on("user_count", (count: number) => {
       setOnlineUsers(count)
     })
 
+    socketRef.current = socket
+
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect()
-      }
+      socket.disconnect()
     }
   }, [])
 
@@ -75,7 +80,7 @@ export default function CommunityChat() {
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       sendMessage()
     }
@@ -171,7 +176,7 @@ export default function CommunityChat() {
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
+                    onKeyDown={handleKeyPress}
                     placeholder={isConnected ? "Type a message..." : "Chat offline"}
                     disabled={!isConnected}
                     className="flex-1 bg-gray-800 border-gray-600 text-white placeholder-gray-400"

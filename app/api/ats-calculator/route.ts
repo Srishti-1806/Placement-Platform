@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export async function POST(request: NextRequest) {
   try {
     const { resumeText, jobDescription } = await request.json()
@@ -16,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     // Try to call Python backend first
     try {
-      const response = await fetch("http://localhost:8000/api/ats-calculator", {
+      const response = await fetch(`${BACKEND_URL}/api/ats-calculator`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

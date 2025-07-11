@@ -1,5 +1,12 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# AWS Keys and Certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
 # dependencies
 /node_modules
 
@@ -26,6 +33,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Project specific
 venv310
 utils/ffmpeg.exe
 utils/ffplay.exe
@@ -36,3 +44,55 @@ temp
 public/pdfs/summary.pdf
 public/pdfs/transcript.pdf
 .config/
+
+# Docker
+.dockerignore
+
+# AWS
+.aws/
+aws-exports.js
+
+# Environment Variables
+.env
+.env.local
+.env.production
+.env.staging
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+temp/
+*.tmp
+*.log
+
+# Build outputs
+dist/
+build/
+.next/

@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,12 +42,13 @@ function SignupForm() {
   const { signup, signupGithub, signupGoogle, isLoading } = useAuth();
   const { playSound } = useSound();
   const router = useRouter();
-  const searchParams = useSearchParams(); // This needs to be wrapped in Suspense
+  const searchParams = useSearchParams();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     playSound("click");
+    
     // Form validation
     if (!name || !email || !password || !confirmPassword) {
       setError("Please fill in all fields");
@@ -82,6 +82,18 @@ function SignupForm() {
 
   const handleSigninGithub = async () => {
     const success = await signupGithub();
+    if (success) {
+      playSound("success");
+      const redirectTo = searchParams.get("redirect") || "/dashboard";
+      router.push(redirectTo);
+    } else {
+      setError("Failed to create account");
+      playSound("error");
+    }
+  };
+
+  const handleSigninGoogle = async () => {
+    const success = await signupGoogle();
     if (success) {
       playSound("success");
       const redirectTo = searchParams.get("redirect") || "/dashboard";
@@ -140,277 +152,165 @@ function SignupForm() {
           transition={{ duration: 1, type: "spring", bounce: 0.4 }}
         >
           <Card className="bg-gradient-to-br from-gray-900/80 via-purple-900/60 to-magenta-900/70 border border-magenta-400/30 backdrop-blur-xl shadow-2xl shadow-magenta-500/20 relative overflow-hidden">
-            {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-magenta-500/10 via-pink-500/5 to-purple-500/10 rounded-lg"></div>
-            <div className="absolute -inset-1 bg-gradient-to-r from-magenta-600 via-pink-600 to-purple-600 rounded-lg blur opacity-20"></div>
-
-            <CardHeader className="text-center relative z-10">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.3, type: "spring", bounce: 0.6 }}
-                whileHover={{ scale: 1.1, rotate: 360 }}
-              >
-                <div className="w-20 h-20 bg-gradient-to-r from-magenta-500 via-pink-500 to-fuchsia-500 rounded-full flex items-center justify-center mx-auto mb-6 relative shadow-lg shadow-magenta-500/50">
-                  <UserPlus className="w-10 h-10 text-white" />
-                  <motion.div
-                    className="absolute -inset-2 bg-gradient-to-r from-magenta-400 via-pink-400 to-fuchsia-400 rounded-full opacity-40 blur-lg"
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 8,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                  />
-                </div>
-              </motion.div>
-              <CardTitle className="text-3xl font-black text-white mb-2">
-                <span className="bg-gradient-to-r from-magenta-400 via-pink-400 to-fuchsia-400 bg-clip-text text-transparent">
-                  Join PlacementPro
-                </span>
-              </CardTitle>
-              <CardDescription className="text-gray-300 text-lg">
-                Create your account and start your{" "}
-                <span className="text-magenta-400 font-semibold">
-                  placement journey
-                </span>
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
+              <CardDescription className="text-center">
+                Join PlacementPro to boost your job search
               </CardDescription>
             </CardHeader>
-
-            <CardContent className="space-y-6">
+            <CardContent>
               {error && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                >
-                  <Alert className="border-red-500/50 bg-red-500/10">
-                    <AlertDescription className="text-red-400">
-                      {error}
-                    </AlertDescription>
-                  </Alert>
-                </motion.div>
+                <Alert variant="destructive" className="mb-4 bg-red-500/10 border-red-500/20 text-red-400">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
-
               <form onSubmit={handleSubmit} className="space-y-4">
-                <motion.div
-                  initial={{ opacity: 0, x: -30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4, type: "spring" }}
-                  className="group"
-                >
-                  <Label
-                    htmlFor="name"
-                    className="text-magenta-300 font-semibold text-sm"
-                  >
-                    Full Name
-                  </Label>
-                  <div className="relative mt-1">
-                    <User className="absolute left-4 top-4 h-5 w-5 text-magenta-400 group-focus-within:text-pink-400 transition-colors z-10" />
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="name"
-                      type="text"
                       placeholder="John Doe"
+                      className="pl-10"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      onFocus={() => playSound("hover")}
-                      className="pl-12 pr-4 py-4 bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 border-magenta-400/30 text-white placeholder-gray-400 focus:border-magenta-400 focus:ring-4 focus:ring-magenta-400/20 rounded-xl backdrop-blur-sm transition-all duration-300 hover:border-pink-400/50 hover:shadow-lg hover:shadow-magenta-500/10 group-focus-within:bg-gradient-to-r group-focus-within:from-magenta-900/20 group-focus-within:to-pink-900/20"
-                      disabled={isLoading}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-magenta-500/5 to-pink-500/5 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                   </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, x: -30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5, type: "spring" }}
-                  className="group"
-                >
-                  <Label
-                    htmlFor="email"
-                    className="text-magenta-300 font-semibold text-sm"
-                  >
-                    Email Address
-                  </Label>
-                  <div className="relative mt-1">
-                    <Mail className="absolute left-4 top-4 h-5 w-5 text-magenta-400 group-focus-within:text-pink-400 transition-colors z-10" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder="you@example.com"
+                      className="pl-10"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      onFocus={() => playSound("hover")}
-                      className="pl-12 pr-4 py-4 bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 border-magenta-400/30 text-white placeholder-gray-400 focus:border-magenta-400 focus:ring-4 focus:ring-magenta-400/20 rounded-xl backdrop-blur-sm transition-all duration-300 hover:border-pink-400/50 hover:shadow-lg hover:shadow-magenta-500/10 group-focus-within:bg-gradient-to-r group-focus-within:from-magenta-900/20 group-focus-within:to-pink-900/20"
-                      disabled={isLoading}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-magenta-500/5 to-pink-500/5 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                   </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, x: -30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6, type: "spring" }}
-                  className="group"
-                >
-                  <Label
-                    htmlFor="password"
-                    className="text-magenta-300 font-semibold text-sm"
-                  >
-                    Password
-                  </Label>
-                  <div className="relative mt-1">
-                    <Lock className="absolute left-4 top-4 h-5 w-5 text-magenta-400 group-focus-within:text-pink-400 transition-colors z-10" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      className="pl-10"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      onFocus={() => playSound("hover")}
-                      className="pl-12 pr-14 py-4 bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 border-magenta-400/30 text-white placeholder-gray-400 focus:border-magenta-400 focus:ring-4 focus:ring-magenta-400/20 rounded-xl backdrop-blur-sm transition-all duration-300 hover:border-pink-400/50 hover:shadow-lg hover:shadow-magenta-500/10 group-focus-within:bg-gradient-to-r group-focus-within:from-magenta-900/20 group-focus-within:to-pink-900/20"
-                      disabled={isLoading}
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-2 h-10 w-10 text-magenta-400 hover:text-pink-300 hover:bg-magenta-400/10 rounded-lg transition-all duration-200"
-                      onClick={() => {
-                        setShowPassword(!showPassword);
-                        playSound("click");
-                      }}
+                      className="absolute right-1 top-1"
+                      onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-5 w-5" />
+                        <EyeOff className="h-4 w-4" />
                       ) : (
-                        <Eye className="h-5 w-5" />
+                        <Eye className="h-4 w-4" />
                       )}
                     </Button>
-                    <div className="absolute inset-0 bg-gradient-to-r from-magenta-500/5 to-pink-500/5 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                   </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, x: -30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.7, type: "spring" }}
-                  className="group"
-                >
-                  <Label
-                    htmlFor="confirmPassword"
-                    className="text-magenta-300 font-semibold text-sm"
-                  >
-                    Confirm Password
-                  </Label>
-                  <div className="relative mt-1">
-                    <Lock className="absolute left-4 top-4 h-5 w-5 text-magenta-400 group-focus-within:text-pink-400 transition-colors z-10" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="confirmPassword"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      className="pl-10"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      onFocus={() => playSound("hover")}
-                      className="pl-12 pr-4 py-4 bg-gradient-to-r from-gray-800/80 to-gray-900/80 border-2 border-magenta-400/30 text-white placeholder-gray-400 focus:border-magenta-400 focus:ring-4 focus:ring-magenta-400/20 rounded-xl backdrop-blur-sm transition-all duration-300 hover:border-pink-400/50 hover:shadow-lg hover:shadow-magenta-500/10 group-focus-within:bg-gradient-to-r group-focus-within:from-magenta-900/20 group-focus-within:to-pink-900/20"
-                      disabled={isLoading}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-magenta-500/5 to-pink-500/5 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                   </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8, type: "spring" }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button
-                    type="submit"
-                    className="w-full h-14 bg-gradient-to-r from-magenta-600 via-pink-600 to-fuchsia-600 hover:from-magenta-700 hover:via-pink-700 hover:to-fuchsia-700 text-white font-bold text-lg rounded-xl shadow-lg shadow-magenta-500/30 hover:shadow-xl hover:shadow-magenta-500/40 transition-all duration-300 relative overflow-hidden group"
-                    disabled={isLoading}
-                    onMouseEnter={() => playSound("hover")}
-                  >
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
-                      initial={{ x: "-100%" }}
-                      whileHover={{ x: "100%" }}
-                      transition={{ duration: 0.6 }}
-                    />
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                        Creating Account...
-                      </>
-                    ) : (
-                      <>
-                        Create Account{" "}
-                        <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
+                </div>
+                <Button className="w-full" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Create Account
+                    </>
+                  )}
+                </Button>
               </form>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.9 }}
-                className="py-4"
-              >
+              <div className="mt-6">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <span
-                      className="w-full border-t border-gradient-to-r from-transparent via-magenta-400/30 to-transparent"
-                      style={{
-                        borderImage:
-                          "linear-gradient(to right, transparent, rgb(236 72 153 / 0.3), transparent) 1",
-                      }}
-                    />
+                    <div className="w-full border-t border-border"></div>
                   </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="bg-gradient-to-r from-gray-900/80 via-purple-900/60 to-magenta-900/70 px-4 text-magenta-300 font-medium">
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
                       Or continue with
                     </span>
                   </div>
                 </div>
-              </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.0, type: "spring" }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button
-                  variant="outline"
-                  className="w-full h-12 border-2 border-magenta-400/50 text-magenta-300 hover:bg-magenta-400/10 hover:border-magenta-400 hover:text-magenta-200 rounded-xl backdrop-blur-sm transition-all duration-300 font-medium"
-                  onMouseEnter={() => playSound("hover")}
-                  onClick={handleSigninGithub}
-                >
-                  <Github className="mr-3 h-5 w-5" />
-                  Continue with GitHub
-                </Button>
-              </motion.div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleSigninGithub}
+                    disabled={isLoading}
+                    className="bg-background/50 border-gray-700 hover:bg-gray-800"
+                  >
+                    <Github className="mr-2 h-4 w-4" />
+                    GitHub
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleSigninGoogle}
+                    disabled={isLoading}
+                    className="bg-background/50 border-gray-700 hover:bg-gray-800"
+                  >
+                    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                      <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335"
+                      />
+                      <path d="M1 1h22v22H1z" fill="none" />
+                    </svg>
+                    Google
+                  </Button>
+                </div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.1 }}
-                className="text-center text-base text-gray-300 pt-4"
-              >
+              <div className="mt-6 text-center text-sm">
                 Already have an account?{" "}
                 <Link
                   href="/login"
-                  className="text-magenta-400 hover:text-pink-300 font-semibold transition-colors hover:underline decoration-2 underline-offset-2"
+                  className="font-medium text-primary hover:text-primary/90"
                   onClick={() => playSound("click")}
                 >
-                  Sign in here
+                  Log in
+                  <ArrowRight className="ml-1 inline-block h-3 w-3" />
                 </Link>
-              </motion.div>
+              </div>
             </CardContent>
           </Card>
         </motion.div>

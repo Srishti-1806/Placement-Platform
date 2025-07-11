@@ -1,6 +1,8 @@
 "use client";
 
 import type React from "react";
+import { auth } from "@/lib/firebase";
+import { GithubAuthProvider, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { createContext, useContext, useState, useEffect } from "react";
 
 interface User {
@@ -18,7 +20,7 @@ interface AuthContextType {
   signup: (name: string, email: string, password: string) => Promise<boolean>;
   signupGithub: () => Promise<boolean>;
   signupGoogle: () => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<boolean>;
   isLoading: boolean;
 }
 
@@ -49,8 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (email && password.length >= 6) {
       const mockUser: User = {
-        id: "1",
-        name: email.split("@")[0],
+        id: Date.now().toString(),
+        name: email.split("@")[0], // Use email prefix as name
         email,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
         role: "student",
@@ -89,45 +91,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
 
-  const signupGithub = async (): Promise<boolean> => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const mockUser: User = {
-      id: Date.now().toString(),
-      name: "GithubUser",
-      email: "githubuser@example.com",
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=githubuser`,
-      role: "student",
-      joinedAt: new Date(),
-    };
-    setUser(mockUser);
-    localStorage.setItem("placement-user", JSON.stringify(mockUser));
-    setIsLoading(false);
-    return true;
-  };
-
   const signupGoogle = async (): Promise<boolean> => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const provider = new GoogleAuthProvider();
 
-    const mockUser: User = {
-      id: Date.now().toString(),
-      name: "GoogleUser",
-      email: "googleuser@example.com",
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=googleuser`,
-      role: "student",
-      joinedAt: new Date(),
-    };
-    setUser(mockUser);
-    localStorage.setItem("placement-user", JSON.stringify(mockUser));
-    setIsLoading(false);
-    return true;
+    try {
+      const result = await signInWithPopup(auth, provider);
+
+      const mockUser: User = {
+        id: result.user.uid,
+        name: result.user.displayName || "Google User",
+        email: result.user.email || "",
+        avatar: result.user.photoURL || undefined,
+        role: "student",
+        joinedAt: new Date(),
+      };
+
+      setUser(mockUser);
+      localStorage.setItem("placement-user", JSON.stringify(mockUser));
+      setIsLoading(false);
+      return true;
+    } catch (e: any) {
+      console.log("ERROR IN GOOGLE SIGNIN", e.message);
+      setIsLoading(false);
+      return false;
+    }
   };
 
-  const logout = () => {
+  const signupGithub = async (): Promise<boolean> => {
+    setIsLoading(true);
+    const provider = new GithubAuthProvider();
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+
+      const mockUser: User = {
+        id: result.user.uid,
+        name: result.user.displayName || "GitHub User",
+        email: result.user.email || "",
+        avatar: result.user.photoURL || undefined,
+        role: "student",
+        joinedAt: new Date(),
+      };
+
+      setUser(mockUser);
+      localStorage.setItem("placement-user", JSON.stringify(mockUser));
+      setIsLoading(false);
+      return true;
+    } catch (e: any) {
+      console.log("ERROR IN GITHUB SIGNIN", e.message);
+      setIsLoading(false);
+      return false;
+    }
+  };
+
+  const logout = async (): Promise<boolean> => {
     setUser(null);
     localStorage.removeItem("placement-user");
+
+    try {
+      await signOut(auth);
+      return true;
+    } catch (e) {
+      return false;
+    }
   };
 
   return (
