@@ -2,7 +2,7 @@ import eventlet
 eventlet.monkey_patch()
 
 from flask import Flask, render_template_string, request
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, send
 from flask_cors import CORS
 import time
 import os
