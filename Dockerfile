@@ -52,10 +52,11 @@ COPY --from=backend-builder /opt/venv /opt/venv
 COPY --from=backend-builder /app/*.py /app/
 COPY --from=backend-builder /app/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Copy frontend build output only (NOT node_modules - saves 200MB+)
+# Copy frontend build output and package files
 COPY --from=frontend-builder /app/.next /app/.next
 COPY --from=frontend-builder /app/public /app/public
 COPY --from=frontend-builder /app/package.json /app/package.json
+COPY --from=frontend-builder /app/pnpm-lock.yaml /app/pnpm-lock.yaml
 COPY --from=frontend-builder /app/next.config.mjs /app/next.config.mjs
 
 WORKDIR /app
@@ -80,8 +81,8 @@ for i in {1..3}; do\n\
 done\n\
 exit 1\n' > /healthcheck.sh && chmod +x /healthcheck.sh
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install pnpm and production node_modules for Next.js runtime
+RUN npm install -g pnpm && pnpm install --prod --frozen-lockfile
 
 # Create non-root user
 RUN useradd -m appuser
