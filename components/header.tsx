@@ -21,9 +21,12 @@ function HeaderInternal() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
   const handleMenuToggle = () => {
-    setIsMenuOpen(!isMenuOpen);
-    playSound(isMenuOpen ? "close" : "open");
+    const nextState = !isMenuOpen;
+    setIsMenuOpen(nextState);
+    playSound(nextState ? ("open" as any) : ("close" as any));
+
   };
 
   const handleLogout = () => {
