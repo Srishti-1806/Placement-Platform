@@ -12,8 +12,8 @@ app.config['SECRET_KEY'] = 'placement_pro_secret_2024!'
 
 # Allow frontend origin for CORS (this is important for production)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
-CORS(app, origins=[FRONTEND_URL, "http://13.60.246.221", "http://13.60.246.221:3000", "http://13.60.246.221:5000", "*"])
-socketio = SocketIO(app, cors_allowed_origins=[FRONTEND_URL, "http://13.60.246.221", "http://13.60.246.221:3000", "http://13.60.246.221:5000", "*"], async_mode='eventlet')
+CORS(app, origins=[FRONTEND_URL, "http://13.60.246.221", "http://13.60.246.221:3000", "http://13.60.246.221:5000","ws://13.60.246.221:5000", "*"])
+socketio = SocketIO(app, cors_allowed_origins=[FRONTEND_URL, "http://13.60.246.221", "http://13.60.246.221:3000", "http://13.60.246.221:5000", "ws://13.60.246.221:5000", "*"], async_mode='eventlet')
 
 # Store connected users
 connected_users = set()
