@@ -19,7 +19,8 @@ on:
 
 jobs:
   build:
-    if: github.event.inputs.skip_build != 'true' && github.event_name == 'push'
+    if: github.event.inputs.skip_build != 'true'
+    # if: github.event.inputs.skip_build != 'true' && github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
