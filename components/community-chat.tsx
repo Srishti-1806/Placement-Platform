@@ -30,9 +30,9 @@ export default function CommunityChat() {
     // Only run on client
     if (typeof window === "undefined") return
 
-    const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_URL || "http://localhost:5000"
-    const socket = io(CHAT_URL, {
-      transports: ["websocket", "polling"],
+    const CHAT_WS_URL = process.env.NEXT_PUBLIC_CHAT_WS_URL || "ws://localhost:5000"
+    const socket = io(CHAT_WS_URL, {
+      transports: ['websocket'],
       withCredentials: false,
       autoConnect: true,
       reconnection: true,
