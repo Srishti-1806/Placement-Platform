@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server"
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export async function GET() {
   try {
     // Call the Python FastAPI backend for webcam recording
-    const response = await fetch("http://localhost:8000/record-webcam", {
+    const response = await fetch(`${BACKEND_URL}/api/record-webcam`, {
       method: "GET",
     })
 

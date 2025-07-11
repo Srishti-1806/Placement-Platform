@@ -1,14 +1,53 @@
 "use client"
 
+import { Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { LogOut, User, Star, BookOpen, MessageSquare, FileText, BarChart3, Briefcase, Users } from "lucide-react"
 import { motion } from "framer-motion"
 import { InteractiveCard } from "@/components/interactive-card"
 import CircularGallery from "@/components/circular-gallery"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useAuth } from "@/contexts/auth-context"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export default function DashboardPage() {
+// Loading component for Suspense fallback
+function DashboardLoading() {
+  return (
+    <div className="min-h-screen pt-20 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <Skeleton className="h-10 w-64 bg-gray-800 mb-2" />
+            <Skeleton className="h-5 w-48 bg-gray-800" />
+          </div>
+          <Skeleton className="h-10 w-32 bg-gray-800" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} className="h-64 rounded-lg bg-gray-800" />
+          ))}
+        </div>
+
+        <Skeleton className="h-96 rounded-lg bg-gray-800 mt-8" />
+        <Skeleton className="h-64 rounded-lg bg-gray-800 mt-8" />
+      </div>
+    </div>
+  )
+}
+
+// Dashboard content component that uses useSearchParams
+function DashboardContent() {
+  const searchParams = useSearchParams();
+  const {logout} = useAuth();
   const router = useRouter()
+  const handlesignOutGoogle = async()=> {
+    const success = logout();
+    if(success){
+      const redirectTo = searchParams.get("redirect") || "/";
+      router.push(redirectTo);
+    }
+  }
 
   return (
     <div className="min-h-screen pt-20 px-4">
@@ -19,7 +58,7 @@ export default function DashboardPage() {
               <h1 className="text-3xl font-bold text-white mb-2">Welcome to Your Dashboard</h1>
               <p className="text-gray-400">Your placement journey starts here</p>
             </div>
-            <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
+            <Button onClick={handlesignOutGoogle} variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </Button>
@@ -214,5 +253,14 @@ export default function DashboardPage() {
         </motion.div>
       </div>
     </div>
+  )
+}
+
+// Main Dashboard component with Suspense boundary
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <DashboardContent />
+    </Suspense>
   )
 }

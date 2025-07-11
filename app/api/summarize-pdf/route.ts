@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -18,7 +20,7 @@ export async function POST(request: NextRequest) {
     backendFormData.append("file", file)
 
     // Call the Python FastAPI backend
-    const response = await fetch("http://localhost:8000/summarize-pdf", {
+    const response = await fetch(`${BACKEND_URL}/api/summarize-pdf`, {
       method: "POST",
       body: backendFormData,
     })

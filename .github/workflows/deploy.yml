@@ -1,0 +1,105 @@
+name: Build and Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_build:
+        description: 'Skip Docker build (use existing image)'
+        required: false
+        default: 'true'
+        type: boolean
+  push:
+    branches: [ main ]
+    paths:
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'package.json'
+      - 'supervisord.conf'
+      - '*.py'
+
+jobs:
+  build:
+    if: github.event.inputs.skip_build != 'true' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Build and push multi-architecture image
+      uses: docker/build-push-action@v5
+      with:
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/placementpro:latest
+        platforms: linux/amd64,linux/arm64
+
+  deploy:
+    if: always()
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v4
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        port: 22
+        timeout: 90s
+        command_timeout: 10m
+        script: |
+          set -e
+          
+          DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+          HOST_IP="${{ secrets.EC2_HOST }}"
+          
+          echo "🚀 Starting PlacementPro deployment on $HOST_IP..."
+          
+          # Ensure Docker is running
+          sudo systemctl start docker || true
+          
+          # Quick cleanup
+          echo "🧹 Cleaning up old containers..."
+          sudo docker stop placementpro 2>/dev/null || true
+          sudo docker rm placementpro 2>/dev/null || true
+          
+          # Kill any processes on required ports
+          echo "🔌 Freeing up ports..."
+          for port in 3000 5000 8000 80; do
+            sudo lsof -ti:$port 2>/dev/null | xargs -r sudo kill -9 2>/dev/null || true
+          done
+          
+          echo "📥 Pulling latest image..."
+          sudo docker pull $DOCKER_USERNAME/placementpro:latest
+          
+          # Create required directories
+          echo "📁 Creating directories..."
+          mkdir -p /home/ec2-user/placementpro/{temp,static,logs}
+          cd /home/ec2-user/placementpro
+          
+          echo "🚀 Starting PlacementPro container..."
+          sudo docker run -d \
+            --name placementpro \
+            -p 80:3000 -p 3000:3000 -p 5000:5000 -p 8000:8000 \
+            -v $(pwd)/temp:/app/temp \
+            -v $(pwd)/static:/app/static \
+            -v $(pwd)/logs:/app/logs \
+            --restart unless-stopped \
+            --memory="1400m" \
+            --cpus="1.2" \
+            $DOCKER_USERNAME/placementpro:latest
+          
+          echo "⏳ Waiting for services..."
+          sleep 30
+          
+          echo "🎉 Deployment complete!"
+          echo "🌐 Website: http://$HOST_IP"
+          echo "📖 API: http://$HOST_IP:8000/docs"
+          echo "💬 Chat: http://$HOST_IP:5000"

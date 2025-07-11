@@ -7,18 +7,23 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import random
 from typing import List, Dict
-from datetime import datetime, timedelta
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 class JobScraperSelenium:
-    def __init__(self, driver_path: str):
+    def __init__(self, driver_path: str = None):
         chrome_options = Options()
         chrome_options.add_argument("--headless")  
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--log-level=3")
 
-        self.driver = webdriver.Chrome(service=Service(driver_path), options=chrome_options)
+        # Use ChromeDriverManager if no path provided
+        if driver_path:
+            self.driver = webdriver.Chrome(service=Service(driver_path), options=chrome_options)
+        else:
+            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+
         self.wait = WebDriverWait(self.driver, 10)
 
     def scrape_naukri_jobs(self, keyword: str = "python developer", location: str = "bangalore",
@@ -95,9 +100,5 @@ class JobScraperSelenium:
 
 
 
-if __name__ == "__main__":
-    scraper = JobScraperSelenium(driver_path="path_to_chromedriver")  # <-- Change path
-    jobs = scraper.scrape_naukri_jobs("python developer", "bangalore", 2)
-    print(f"Found {len(jobs)} jobs:")
-    for job in jobs[:5]:
-        print(f"- {job['title']} at {job['company']} ({job['location']})")
+# Add alias for backward compatibility
+JobScraper = JobScraperSelenium
