@@ -20,6 +20,10 @@ COPY public/ ./public/
 COPY styles/ ./styles/
 
 # Set environment variables for Next.js build
+ENV FRONTEND_URL="http://13.60.246.221"
+ENV BACKEND_URL="http://13.60.246.221:8000"
+ENV CHAT_URL="ws://13.60.246.221:5000"
+ENV CHAT_WS_URL="ws://13.60.246.221:5000"
 ENV NEXT_PUBLIC_API_URL="http://13.60.246.221:8000"
 ENV NEXT_PUBLIC_CHAT_WS_URL="ws://13.60.246.221:5000"
 
