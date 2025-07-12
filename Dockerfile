@@ -158,19 +158,21 @@ COPY utils/ ./utils/
 COPY supervisord.conf ./
 
 # Ensure utils is recognized as a Python module
-RUN touch utils/_init_.py
+RUN touch utils/__init__.py
 
 # ---- Stage 3: Final image ----
 FROM python:3.11-slim
 
 # System dependencies
+# System dependencies (added libglib2.0-0 here)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         supervisor \
         curl \
         nodejs \
         npm \
-        libgl1 && \
+        libgl1 \
+        libglib2.0-0 && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy Python environment and backend
