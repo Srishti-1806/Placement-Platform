@@ -66,10 +66,23 @@ jobs:
           # Ensure Docker is running
           sudo systemctl start docker || true
           
-          # Quick cleanup
+          # # Quick cleanup
+          # echo "🧹 Cleaning up old containers..."
+          # sudo docker stop placementpro 2>/dev/null || true
+          # sudo docker rm placementpro 2>/dev/null || true
+          
+          # 🚀 New: Cleanup old docker images, containers, volumes
+          echo "🧹 Running deep Docker cleanup to free space..."
+          sudo docker stop $(sudo docker ps -aq) 2>/dev/null || true
+          sudo docker rm $(sudo docker ps -aq) 2>/dev/null || true
+          sudo docker system prune -af
+          sudo docker volume prune -f
+
+           # Your existing cleanup
           echo "🧹 Cleaning up old containers..."
           sudo docker stop placementpro 2>/dev/null || true
           sudo docker rm placementpro 2>/dev/null || true
+
           
           # Kill any processes on required ports
           echo "🔌 Freeing up ports..."
