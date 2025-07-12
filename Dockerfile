@@ -164,7 +164,6 @@ RUN touch utils/__init__.py
 FROM python:3.11-slim
 
 # System dependencies
-# System dependencies (added libglib2.0-0 here)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         supervisor \
@@ -172,8 +171,11 @@ RUN apt-get update && \
         nodejs \
         npm \
         libgl1 \
-        libglib2.0-0 && \
+        libglib2.0-0 \
+        libglib2.0-bin \
+        libgstreamer1.0-0 && \
     rm -rf /var/lib/apt/lists/*
+
 
 # Copy Python environment and backend
 COPY --from=backend-builder /opt/venv /opt/venv
