@@ -20,6 +20,8 @@ ensure_nltk_data()
 
 from nltk.corpus import stopwords
 
+
+
 class ATSCalculator:
     def __init__(self):
         self.stop_words = set(stopwords.words('english'))

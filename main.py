@@ -294,3 +294,4 @@ if __name__ == "__main__":
         atexit.register(lambda: chat_proc.terminate() if chat_proc else None)
         atexit.register(lambda: next_proc.terminate() if next_proc else None)
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=os.getenv("RELOAD", "false") == "true")
+
