@@ -192,7 +192,8 @@ WORKDIR /app
 
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
-    IN_DOCKER=true
+    IN_DOCKER=true \
+    PYTHONPATH=/app
 
 # Create supervisor log directories
 RUN mkdir -p /app/logs && \
