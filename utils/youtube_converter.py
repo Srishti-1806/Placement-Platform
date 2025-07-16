@@ -6,12 +6,14 @@ import whisper
 from fpdf import FPDF
 from datetime import timedelta
 
+
 class YouTubeConverter:
     def __init__(self):
         try:
+            print("[INFO] Loading Whisper model...")
             self.model = whisper.load_model("base")
         except Exception as e:
-            print("Failed to load Whisper model:", str(e))
+            print("[ERROR] Failed to load Whisper model:", str(e))
             raise
 
         self.output_dir = "static/transcripts"
@@ -32,13 +34,18 @@ class YouTubeConverter:
             # Download audio to temp file
             with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp_file:
                 audio_path = tmp_file.name
+
             print(f"[INFO] Downloading audio to: {audio_path}")
             audio_stream.download(filename=audio_path)
+
+            # Validate download
+            if not os.path.exists(audio_path) or os.path.getsize(audio_path) < 1000:
+                return {"success": False, "error": "Audio download failed or is too small."}
 
             # Transcribe audio using Whisper
             print("[INFO] Starting transcription...")
             result = self.model.transcribe(audio_path)
-            transcript_text = result.get("text", "")
+            transcript_text = result.get("text", "").strip()
             language = result.get("language", "unknown")
 
             if not transcript_text:
@@ -49,7 +56,10 @@ class YouTubeConverter:
             pdf = FPDF()
             pdf.add_page()
             pdf.set_font("Arial", size=12)
-            pdf.multi_cell(0, 10, f"Title: {yt.title}\nDuration: {duration}\nLanguage: {language}\n\nTranscript:\n{transcript_text}")
+            pdf.multi_cell(
+                0, 10,
+                f"Title: {yt.title}\nDuration: {duration}\nLanguage: {language}\n\nTranscript:\n{transcript_text}"
+            )
 
             pdf_filename = f"{title}_transcript.pdf"
             pdf_path = os.path.join(self.output_dir, pdf_filename)
@@ -77,4 +87,7 @@ class YouTubeConverter:
         except Exception as e:
             print("[ERROR] Exception during YouTube processing:")
             traceback.print_exc()
-            return {"success": False, "error": f"Exception occurred: {str(e)}"}
+            return {
+                "success": False,
+                "error": f"Exception occurred: {str(e)}"
+            }

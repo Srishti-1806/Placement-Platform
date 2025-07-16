@@ -48,3 +48,4 @@ export async function POST(request: NextRequest) {
     console.log("Analysis request complete");
   }
 }
+

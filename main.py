@@ -140,13 +140,15 @@ class YouTubeRequest(BaseModel):
     url: str
     language: str = "en"
 
+
 class AnalysisResult(BaseModel):
     transcript: str
-    speech_score: int
-    body_language_score: int
-    total_score: int
+    speech_score: float
+    body_language_score: float
+    total_score: float
     feedback: str
     pdf_url: str
+
 
 # --- Utility ---
 def extract_text_from_pdf(file: UploadFile) -> str:
@@ -220,22 +222,27 @@ async def ats_score(request: ATSRequest):
         raise HTTPException(status_code=503, detail="ATS Calculator unavailable")
     return ats_calculator.calculate_ats_score(request.resume_text, request.job_description)
 
-@app.post("/api/analyze")
-async def analyze_video_return_pdf(file: UploadFile = File(...)):
+@app.post("/api/analyze", response_model=AnalysisResult)
+@router.post("/api/analyze", response_model=AnalysisResult)
+async def analyze_video_return_json(file: UploadFile = File(...)):
     try:
+        # Create necessary folders
         os.makedirs("temp", exist_ok=True)
         os.makedirs("static/reports", exist_ok=True)
 
+        # Save uploaded file
         filename = Path(file.filename).name
         file_path = os.path.join("temp", filename)
         with open(file_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
 
+        # Run analysis
         transcript = await transcribe_audio(file_path)
         speech_score = await analyze_speech(file_path)
         body_language_score = await analyze_body_language(file_path)
         feedback = await generate_feedback(transcript, speech_score, body_language_score)
 
+        # Generate PDF
         pdf_filename = filename.rsplit(".", 1)[0] + "_report.pdf"
         pdf_path = os.path.join("static/reports", pdf_filename)
 
@@ -247,25 +254,46 @@ async def analyze_video_return_pdf(file: UploadFile = File(...)):
             pdf_path
         )
 
-        return FileResponse(
-            path=pdf_path,
-            media_type="application/pdf",
-            filename="analysis_report.pdf"
-        )
+        # Return result as JSON
+        return AnalysisResult(
+            transcript=transcript,
+            speech_score=round(speech_score, 2),
+            body_language_score=round(body_language_score, 2),
+            total_score=round((speech_score + body_language_score) / 2, 2),
+            feedback=feedback,
+            pdf_url=f"{BACKEND_URL}/static/reports/{pdf_filename}"
+        ).dict
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
         return {"error": str(e)}
+
+
+class YouTubeRequest(BaseModel):
+    url: str
+
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from utils.youtube_converter import YouTubeConverter  # Make sure this path is correct
+
+app = FastAPI()
+
+# Initialize YouTubeConverter
+youtube_converter = YouTubeConverter()
+
+class YouTubeRequest(BaseModel):
+    url: str
 
 @app.post("/api/youtube-transcript")
 async def youtube_transcript_api(request: YouTubeRequest):
     if not youtube_converter:
         raise HTTPException(status_code=503, detail="YouTube Converter unavailable")
+    
     try:
         result = youtube_converter.youtube_to_transcript(request.url)
-        if not result["success"]:
-            raise HTTPException(status_code=500, detail=result["error"])
+        if not result.get("success", False):
+            raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
+        
         return {
             "success": True,
             "title": result["video_info"]["title"],
@@ -281,10 +309,12 @@ async def youtube_transcript_api(request: YouTubeRequest):
 async def get_youtube_transcript(url: str = Query(...)):
     if not youtube_converter:
         raise HTTPException(status_code=503, detail="YouTube Converter unavailable")
+    
     try:
         result = youtube_converter.youtube_to_transcript(url)
-        if not result["success"]:
-            return JSONResponse(status_code=500, content={"error": result["error"]})
+        if not result.get("success", False):
+            return JSONResponse(status_code=500, content={"error": result.get("error", "Unknown error")})
+        
         return {
             "success": True,
             "title": result["video_info"]["title"],
@@ -295,6 +325,7 @@ async def get_youtube_transcript(url: str = Query(...)):
         }
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+
 
 @app.post("/api/summarize-pdf")
 async def summarize_pdf(file: UploadFile = File(...)):
