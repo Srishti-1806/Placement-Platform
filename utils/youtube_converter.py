@@ -19,17 +19,36 @@ class YouTubeConverter:
         self.output_dir = "static/transcripts"
         os.makedirs(self.output_dir, exist_ok=True)
 
+    def sanitize_youtube_url(self, url: str) -> str:
+        # Strip timestamps or additional query params like &t= etc.
+        if "&" in url:
+            url = url.split("&")[0]
+        return url.strip()
+
     def youtube_to_transcript(self, url: str):
         try:
-            print(f"[INFO] Processing YouTube URL: {url}")
-            yt = YouTube(url)
+            sanitized_url = self.sanitize_youtube_url(url)
+            print(f"[INFO] Processing sanitized YouTube URL: {sanitized_url}")
+
+            try:
+                yt = YouTube(sanitized_url)
+            except Exception as e:
+                import traceback
+                print("[ERROR] Failed to create YouTube object:", str(e))
+                traceback.print_exc()  # <-- This will show the root problem in the terminal.
+                return {
+                    "success": False,
+                    "error": f"Failed to fetch YouTube video: {str(e)}"
+                }
+
 
             audio_stream = yt.streams.filter(only_audio=True).first()
             if not audio_stream:
                 return {"success": False, "error": "No audio stream found for this video."}
 
             title = yt.title.replace(" ", "_").replace("/", "_").replace("\\", "_")
-            duration = str(timedelta(seconds=int(yt.length)))
+            duration_seconds = int(yt.length)
+            duration_str = str(timedelta(seconds=duration_seconds))
 
             # Download audio to temp file
             with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp_file:
@@ -58,7 +77,7 @@ class YouTubeConverter:
             pdf.set_font("Arial", size=12)
             pdf.multi_cell(
                 0, 10,
-                f"Title: {yt.title}\nDuration: {duration}\nLanguage: {language}\n\nTranscript:\n{transcript_text}"
+                f"Title: {yt.title}\nDuration: {duration_str}\nLanguage: {language}\n\nTranscript:\n{transcript_text}"
             )
 
             pdf_filename = f"{title}_transcript.pdf"
@@ -79,7 +98,7 @@ class YouTubeConverter:
                 },
                 "video_info": {
                     "title": yt.title,
-                    "duration": duration
+                    "duration": duration_seconds  # Return as seconds for frontend formatting
                 },
                 "pdf_url": f"/static/transcripts/{pdf_filename}"
             }

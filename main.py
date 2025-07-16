@@ -223,7 +223,6 @@ async def ats_score(request: ATSRequest):
     return ats_calculator.calculate_ats_score(request.resume_text, request.job_description)
 
 @app.post("/api/analyze", response_model=AnalysisResult)
-@router.post("/api/analyze", response_model=AnalysisResult)
 async def analyze_video_return_json(file: UploadFile = File(...)):
     try:
         # Create necessary folders

@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -39,11 +41,23 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
-          { key: 'Access-Control-Allow-Origin', value: 'http://localhost:8000' },
+          { key: 'Access-Control-Allow-Origin', value: process.env.FRONTEND_URL || 'http://localhost:3000' },
           { key: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS' },
           { key: 'Access-Control-Allow-Headers', value: 'Content-Type' },
         ],
       },
+    ];
+  },
+
+  async rewrites() {
+    return [
+      { source: '/api/summarize-pdf', destination: `${BACKEND_URL}/api/summarize-pdf` },
+      { source: '/api/youtube-transcript', destination: `${BACKEND_URL}/api/youtube-transcript` },
+      { source: '/api/ats-calculator', destination: `${BACKEND_URL}/api/ats-calculator` },
+      { source: '/api/analyze-speech', destination: `${BACKEND_URL}/api/analyze-speech` },
+      { source: '/api/jobs', destination: `${BACKEND_URL}/api/jobs` },
+      { source: '/api/record-webcam', destination: `${BACKEND_URL}/api/record-webcam` },
+      // Add more as needed
     ];
   },
 };

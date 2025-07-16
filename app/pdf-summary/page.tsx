@@ -1,8 +1,7 @@
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,7 +32,6 @@ import {
   Gauge,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface SummaryResult {
   summary: string;
@@ -102,6 +100,38 @@ export default function PDFSummaryPage() {
     }
   };
 
+  const orbConfigs = useMemo(
+    () =>
+      Array.from({ length: 8 }).map(() => ({
+        x: Math.random() * 200 - 100,
+        y: Math.random() * 150 - 75,
+        duration: 12 + Math.random() * 6,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+      })),
+    []
+  );
+
+  const patternConfigs = useMemo(
+    () =>
+      Array.from({ length: 15 }).map(() => ({
+        duration: 20 + Math.random() * 10,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+      })),
+    []
+  );
+
+  const uploadPatterns = useMemo(
+    () =>
+      Array.from({ length: 6 }).map(() => ({
+        left: `${Math.random() * 80}%`,
+        top: `${Math.random() * 80}%`,
+        duration: 8 + Math.random() * 2,
+      })),
+    []
+  );
+
   return (
     <div className="min-h-screen pt-20 relative overflow-hidden">
       {/* Vibrant Dark Green Background with Layers */}
@@ -111,19 +141,18 @@ export default function PDFSummaryPage() {
 
       {/* Dynamic Floating Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Large Floating Orbs */}
-        {Array.from({ length: 8 }).map((_, i) => (
+        {orbConfigs.map((config, i) => (
           <motion.div
             key={i}
             animate={{
               scale: [1, 1.4, 1],
               rotate: [0, 180, 360],
               opacity: [0.1, 0.4, 0.1],
-              x: [0, Math.random() * 200 - 100],
-              y: [0, Math.random() * 150 - 75],
+              x: [0, config.x],
+              y: [0, config.y],
             }}
             transition={{
-              duration: 12 + Math.random() * 6,
+              duration: config.duration,
               repeat: Infinity,
               ease: "easeInOut",
               delay: i * 1.5,
@@ -141,14 +170,13 @@ export default function PDFSummaryPage() {
               ][i % 8]
             }`}
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: config.left,
+              top: config.top,
             }}
           />
         ))}
 
-        {/* Geometric Patterns */}
-        {Array.from({ length: 15 }).map((_, i) => (
+        {patternConfigs.map((config, i) => (
           <motion.div
             key={`pattern-${i}`}
             animate={{
@@ -157,15 +185,15 @@ export default function PDFSummaryPage() {
               opacity: [0.1, 0.3, 0.1],
             }}
             transition={{
-              duration: 20 + Math.random() * 10,
+              duration: config.duration,
               repeat: Infinity,
               ease: "linear",
               delay: i * 0.8,
             }}
             className="absolute w-4 h-4 bg-gradient-to-r from-emerald-400/20 to-green-500/20 transform rotate-45"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: config.left,
+              top: config.top,
             }}
           />
         ))}

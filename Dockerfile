@@ -34,14 +34,24 @@ RUN pnpm build
 FROM python:3.11-slim AS backend-builder
 
 WORKDIR /app
+
+# System dependencies for OpenCV and libGL
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libgl1 && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN python -m venv /opt/venv && \
     /opt/venv/bin/pip install --upgrade pip && \
     /opt/venv/bin/pip install --timeout=1000 --no-cache-dir -r requirements.txt
 
-# Copy only necessary backend files (NOT entire directory)
+# Copy backend files
 COPY *.py ./
+COPY utils/ ./utils/
 COPY supervisord.conf ./
+
+# Ensure utils is recognized as a Python module
+RUN touch utils/__init__.py
 
 # ---- Stage 3: Final image ----
 FROM python:3.11-slim
@@ -53,11 +63,17 @@ RUN apt-get update && \
         curl \
         nodejs \
         npm \
-    && rm -rf /var/lib/apt/lists/*
+        libgl1 \
+        libglib2.0-0 \
+        libglib2.0-bin \
+        libgstreamer1.0-0 && \
+    rm -rf /var/lib/apt/lists/*
+
 
 # Copy Python environment and backend
 COPY --from=backend-builder /opt/venv /opt/venv
 COPY --from=backend-builder /app/*.py /app/
+COPY --from=backend-builder /app/utils /app/utils
 COPY --from=backend-builder /app/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Copy frontend build output and package files
@@ -71,7 +87,8 @@ WORKDIR /app
 
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
-    IN_DOCKER=true
+    IN_DOCKER=true \
+    PYTHONPATH=/app
 
 # Create supervisor log directories
 RUN mkdir -p /app/logs && \
@@ -102,27 +119,3 @@ EXPOSE 3000 5000 8000 80
 HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=3 CMD ["/healthcheck.sh"]
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
-
-FROM python:3.10-slim
-
-# Install ffmpeg and git
-RUN apt-get update && \
-    apt-get install -y ffmpeg git && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
-WORKDIR /app
-
-# Copy requirements and install dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the project
-COPY . .
-
-# Expose the port FastAPI will run on
-EXPOSE 8000
-
-# Run the FastAPI app using Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
