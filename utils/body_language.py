@@ -32,4 +32,6 @@ def analyze_body_language(video_path: str) -> int:
         return 50
 
     percentage = (posture_score / total_frames) * 100
+    print(int(percentage), "ye dekh $$$$$$$$$$")
     return int(percentage)
+

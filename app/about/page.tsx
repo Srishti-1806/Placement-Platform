@@ -41,7 +41,7 @@ const features = [
       "Voice modulation assessment",
       "Comprehensive PDF reports",
     ],
-    tech: ["OpenCV", "MediaPipe", "Whisper AI", "OpenAI GPT"],
+    tech: ["OpenCV", "MediaPipe", "Whisper AI", "Groq"],
   },
   {
     icon: Youtube,

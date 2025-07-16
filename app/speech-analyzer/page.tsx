@@ -53,12 +53,12 @@ export default function SpeechAnalyzerPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult | null>(
-    null,
+    null
   );
   const [error, setError] = useState<string | null>(null);
 
   const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -885,17 +885,23 @@ export default function SpeechAnalyzerPage() {
                           <div className="space-y-4">
                             <div className="text-center">
                               <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{
-                                  delay: 0.6 + index * 0.1,
-                                  duration: 0.8,
-                                  type: "spring",
-                                }}
-                                className={`text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r ${card.gradient} mb-1`}
-                              >
-                                {card.score}
-                              </motion.div>
+
+  initial={{ scale: 0 }}
+  animate={{ scale: 1 }}
+  transition={{
+    delay: 0.6 + index * 0.1,
+    duration: 0.8,
+    type: "spring",
+  }}
+  className={`text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r ${card.gradient} mb-1`}
+>
+  {card.score != null && !isNaN(Number(card.score))
+    ? Number(card.score).toFixed(2).toString()
+    : "N/A"}
+</motion.div>
+
+
+
                               <div className="text-gray-400 text-xs">
                                 out of 100
                               </div>
@@ -920,80 +926,86 @@ export default function SpeechAnalyzerPage() {
                   ))}
                 </div>
 
-                {/* Transcript Section */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8, duration: 0.6 }}
-                >
-                  <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-600/50 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
-                    <CardHeader className="relative">
-                      <CardTitle className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 flex items-center">
-                        <motion.div
-                          animate={{ scale: [1, 1.05, 1] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                          className="mr-3"
-                        >
-                          <MessageSquare className="h-6 w-6 text-blue-400" />
-                        </motion.div>
-                        Speech Transcript
-                      </CardTitle>
-                      <CardDescription className="text-gray-300 text-base">
-                        AI-generated transcript of your presentation
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="relative">
-                      <motion.div
-                        className="bg-gradient-to-br from-gray-900/60 to-gray-800/60 p-6 rounded-xl border border-gray-600/50 backdrop-blur-sm"
-                        whileHover={{ scale: 1.01 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <p className="text-gray-200 leading-relaxed text-base">
-                          {analysisResults.transcript}
-                        </p>
-                      </motion.div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                {analysisResults && (
+                  <>
+                    {/* Transcript Section */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.8, duration: 0.6 }}
+                    >
+                      <Card className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 border border-gray-600/50 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
+                        <CardHeader className="relative">
+                          <CardTitle className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 flex items-center">
+                            <motion.div
+                              animate={{ scale: [1, 1.05, 1] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                              className="mr-3"
+                            >
+                              <MessageSquare className="h-6 w-6 text-blue-400" />
+                            </motion.div>
+                            Speech Transcript
+                          </CardTitle>
+                          <CardDescription className="text-gray-300 text-base">
+                            AI-generated transcript of your presentation
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="relative">
+                          <motion.div
+                            className="bg-gradient-to-br from-gray-900/60 to-gray-800/60 p-6 rounded-xl border border-gray-600/50 backdrop-blur-sm"
+                            whileHover={{ scale: 1.01 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <p className="text-gray-200 leading-relaxed text-base">
+                              {analysisResults.transcript ||
+                                "Transcript not available."}
+                            </p>
+                          </motion.div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
 
-                {/* AI Feedback Section */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1, duration: 0.6 }}
-                >
-                  <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5"></div>
-                    <CardHeader className="relative">
-                      <CardTitle className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center">
-                        <motion.div
-                          animate={{ scale: [1, 1.05, 1] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                          className="mr-3"
-                        >
-                          <Brain className="h-6 w-6 text-indigo-400" />
-                        </motion.div>
-                        AI Feedback & Recommendations
-                      </CardTitle>
-                      <CardDescription className="text-gray-300 text-base">
-                        Personalized insights powered by advanced AI to enhance
-                        your presentation skills
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="relative">
-                      <motion.div
-                        className="bg-gradient-to-br from-indigo-950/60 to-purple-950/60 p-6 rounded-xl border border-indigo-600/50 backdrop-blur-sm"
-                        whileHover={{ scale: 1.01 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <p className="text-gray-200 leading-relaxed text-base">
-                          {analysisResults.feedback}
-                        </p>
-                      </motion.div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                    {/* AI Feedback Section */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1, duration: 0.6 }}
+                    >
+                      <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5"></div>
+                        <CardHeader className="relative">
+                          <CardTitle className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 flex items-center">
+                            <motion.div
+                              animate={{ scale: [1, 1.05, 1] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                              className="mr-3"
+                            >
+                              <Brain className="h-6 w-6 text-indigo-400" />
+                            </motion.div>
+                            AI Feedback & Recommendations
+                          </CardTitle>
+                          <CardDescription className="text-gray-300 text-base">
+                            Personalized insights powered by advanced AI to
+                            enhance your presentation skills
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="relative">
+                          <motion.div
+                            className="bg-gradient-to-br from-indigo-950/60 to-purple-950/60 p-6 rounded-xl border border-indigo-600/50 backdrop-blur-sm"
+                            whileHover={{ scale: 1.01 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <p className="text-gray-200 leading-relaxed text-base">
+                              {analysisResults.feedback ||
+                                "Feedback not available."}
+                            </p>
+                          </motion.div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  </>
+                )}
 
                 {/* Call to Action */}
                 <motion.div

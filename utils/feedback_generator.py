@@ -1,9 +1,12 @@
-# utils/feedback_generator.py
-from openai import OpenAI
+from dotenv import load_dotenv
 import os
 
-# Initialize the OpenAI client with your API key
-client = OpenAI(api_key="")
+load_dotenv()  # MUST be called before os.getenv
+
+from groq import Groq
+
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
 def generate_feedback(transcript: str, speech_score: int, body_language_score: int) -> str:
     if not transcript:
         return "Error: Transcript is empty. Cannot generate feedback."
@@ -22,7 +25,7 @@ Please give constructive, professional feedback in 4-5 sentences, including at l
 
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="llama3-8b-8192",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant who gives feedback on presentations."},
                 {"role": "user", "content": prompt}

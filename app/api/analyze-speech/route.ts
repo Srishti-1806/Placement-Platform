@@ -1,8 +1,11 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+
 export async function POST(request: NextRequest) {
+  let response;
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -14,16 +17,19 @@ export async function POST(request: NextRequest) {
     const backendFormData = new FormData();
     backendFormData.append("file", file);
 
-    // FIX: Use the correct backend endpoint for analyze-speech
-    const response = await fetch(`${BACKEND_URL}/api/analyze-speech`, {
+    // Try fetching from backend
+    response = await fetch(`${BACKEND_URL}/api/analyze`, {
       method: "POST",
       body: backendFormData,
     });
 
+    // If response is not OK (like 500, 400), throw an error
     if (!response.ok) {
-      throw new Error("Backend analysis failed");
+      const errorText = await response.text();
+      throw new Error(`Backend analysis failed: ${errorText}`);
     }
 
+    // Parse the blob (PDF)
     const pdfBlob = await response.blob();
 
     return new NextResponse(pdfBlob, {
@@ -33,8 +39,12 @@ export async function POST(request: NextRequest) {
         "Content-Disposition": "attachment; filename=analysis_report.pdf",
       },
     });
+
   } catch (error) {
     console.error("Analysis error:", error);
     return NextResponse.json({ error: "Analysis failed. Please try again." }, { status: 500 });
+  } finally {
+    // Optional: Cleanup or logging
+    console.log("Analysis request complete");
   }
 }

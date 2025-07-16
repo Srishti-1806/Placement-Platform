@@ -9,16 +9,15 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  experimental: {
-  missingSuspenseWithCSRBailout: false,
-},
-  
+
   // For production builds
   output: 'standalone',
-  
-  // Add webpack config for better build optimization
+
+  // Use the correct serverExternalPackages option (not experimental)
+  serverExternalPackages: ['sharp', 'onnxruntime-node'],
+
+  // Webpack optimization
   webpack: (config, { dev, isServer }) => {
-    // Optimize for production
     if (!dev && !isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',
@@ -29,26 +28,23 @@ const nextConfig = {
             chunks: 'all',
           },
         },
-      }
+      };
     }
-    return config
+    return config;
   },
-  
-  // FIXED: Use serverExternalPackages instead of experimental.serverComponentsExternalPackages
-  serverExternalPackages: ['sharp', 'onnxruntime-node'],
 
+  // CORS headers for FastAPI backend
   async headers() {
     return [
       {
-        // Allow requests from your FastAPI backend
         source: '/:path*',
         headers: [
           { key: 'Access-Control-Allow-Origin', value: 'http://localhost:8000' },
           { key: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type' }
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type' },
         ],
       },
-    ]
+    ];
   },
 };
 

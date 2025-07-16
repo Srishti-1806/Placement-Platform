@@ -1,74 +1,66 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export async function POST(request: NextRequest) {
+  let timeoutId: NodeJS.Timeout;
+
   try {
-    const { url } = await request.json()
+    const { url } = await request.json();
 
     if (!url) {
-      return NextResponse.json({ error: "No YouTube URL provided" }, { status: 400 })
+      return NextResponse.json({ error: "No YouTube URL provided" }, { status: 400 });
     }
 
     // Validate YouTube URL
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
     if (!youtubeRegex.test(url)) {
-      return NextResponse.json({ error: "Please provide a valid YouTube URL" }, { status: 400 })
+      return NextResponse.json({ error: "Please provide a valid YouTube URL" }, { status: 400 });
     }
 
-    console.log("Calling Python backend for YouTube transcription...")
+    console.log("[INFO] Calling Python backend for YouTube transcription...");
 
-    // Call the Python FastAPI backend with timeout
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 300000) // 5 minute timeout
+    // Setup AbortController with timeout (5 minutes)
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), 300000); // 5 mins
 
-    try {
-      const response = await fetch("/api/youtube-transcript", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url }),
-        signal: controller.signal,
-      })
+    const response = await fetch(`${BACKEND_URL}/api/youtube-transcript`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+      signal: controller.signal,
+    });
 
-      clearTimeout(timeoutId)
+    clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("Backend error:", errorText)
-        throw new Error(`Backend error: ${response.status} - ${errorText}`)
-      }
-
-      const result = await response.json()
-      console.log("YouTube transcription successful")
-      return NextResponse.json(result)
-    } catch (fetchError: any) {
-      clearTimeout(timeoutId)
-
-      if (fetchError.name === "AbortError") {
-        throw new Error("Request timeout - video processing took too long")
-      }
-
-      if (fetchError.code === "ECONNREFUSED") {
-        throw new Error("Backend server is not running. Please start the Python server on port 8000.")
-      }
-
-      throw fetchError
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[BACKEND ERROR]:", errorText);
+      throw new Error(`Backend error: ${response.status} - ${errorText}`);
     }
+
+    const data = await response.json();
+    console.log("[SUCCESS] Transcription complete");
+    return NextResponse.json(data);
   } catch (error: any) {
-    console.error("YouTube transcription error:", error)
+    clearTimeout(timeoutId); // ✅ FIXED: pass timeoutId
 
-    let errorMessage = "Transcription failed. Please try again."
+    let errorMessage = "An unexpected error occurred. Please try again later.";
+    let status = 500;
 
-    if (error.message.includes("Backend server is not running")) {
-      errorMessage = "Backend server is not available. Please ensure the Python server is running on port 8000."
-    } else if (error.message.includes("timeout")) {
-      errorMessage = "Processing timeout. Please try with a shorter video."
-    } else if (error.message.includes("Invalid YouTube URL")) {
-      errorMessage = "Please provide a valid YouTube URL."
+    if (error.name === "AbortError") {
+      errorMessage = "The transcription request timed out. Try a shorter video.";
+    } else if (
+      error.message.includes("ECONNREFUSED") ||
+      error.message.includes("Failed to fetch")
+    ) {
+      errorMessage = "Unable to connect to backend. Please ensure the Python server is running on port 8000.";
+      status = 503;
+    } else if (error.message.includes("Backend error")) {
+      errorMessage = error.message;
     }
 
-    return NextResponse.json({ error: errorMessage }, { status: 500 })
+    console.error("[ERROR] Transcription error:", error.message || error);
+    return NextResponse.json({ error: errorMessage }, { status });
   }
 }

@@ -29,4 +29,5 @@ def analyze_speech(video_path: str) -> int:
         score = 60
 
     os.remove(temp_wav)
+    print(score, "ye dekh le $$$$$$$$$$$$$$$")
     return score

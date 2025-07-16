@@ -96,7 +96,7 @@ class ATSCalculator:
             recommendations = self.generate_recommendations(
                 overall_score, missing_keywords, matched_keywords
             )
-
+  
             return {
                 "overall_score": round(overall_score, 2),
                 "similarity_score": round(similarity_score * 100, 2),

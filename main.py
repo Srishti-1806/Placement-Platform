@@ -1,19 +1,17 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile, Request, Form, Query
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request, Form, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from pydantic import BaseModel
 from typing import Optional
-import uvicorn
 from pathlib import Path
+from PyPDF2 import PdfReader
+
 import os
 import shutil
 import subprocess
-import asyncio
-import threading
-import time
 import sys
-from PyPDF2 import PdfReader
+import uvicorn
 
 # --- Load custom modules safely ---
 try:
@@ -90,7 +88,12 @@ except Exception as e:
     youtube_converter = None
     print(f"YouTube Converter failed: {e}")
 
-from pipeline import run_analysis_pipeline
+try:
+    from pipeline import run_analysis_pipeline
+    print("Pipeline loaded")
+except Exception as e:
+    run_analysis_pipeline = None
+    print(f"Pipeline failed: {e}")
 
 # --- Env & Directory Setup ---
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -107,7 +110,7 @@ app = FastAPI(title="PlacementPro API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Use [FRONTEND_URL] in production
+    allow_origins=["*"],  # Replace with [FRONTEND_URL] in prod
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -136,6 +139,14 @@ class JobSearchRequest(BaseModel):
 class YouTubeRequest(BaseModel):
     url: str
     language: str = "en"
+
+class AnalysisResult(BaseModel):
+    transcript: str
+    speech_score: int
+    body_language_score: int
+    total_score: int
+    feedback: str
+    pdf_url: str
 
 # --- Utility ---
 def extract_text_from_pdf(file: UploadFile) -> str:
@@ -184,10 +195,10 @@ async def proxy_chat():
     except Exception:
         return HTMLResponse(content=f"""
         <html>
-            <body style="font-family: Arial; text-align: center; padding: 50px;">
+            <body style=\"font-family: Arial; text-align: center; padding: 50px;\">
                 <h1>Chat Server Starting...</h1>
                 <p>The chat server is initializing. Please wait...</p>
-                <p><a href="{CHAT_URL}">Direct Chat Link</a></p>
+                <p><a href=\"{CHAT_URL}\">Direct Chat Link</a></p>
                 <script>setTimeout(() => window.location.reload(), 5000);</script>
             </body>
         </html>
@@ -209,39 +220,78 @@ async def ats_score(request: ATSRequest):
         raise HTTPException(status_code=503, detail="ATS Calculator unavailable")
     return ats_calculator.calculate_ats_score(request.resume_text, request.job_description)
 
-@app.post("/api/analyze-video/")
-async def analyze_video(video: UploadFile = File(...)):
-    if video.content_type not in ["video/mp4", "video/webm", "video/x-matroska"]:
-        raise HTTPException(status_code=400, detail="Upload a valid video format")
-    file_path = f"temp/{video.filename}"
-    with open(file_path, "wb") as f:
-        f.write(await video.read())
+@app.post("/api/analyze")
+async def analyze_video_return_pdf(file: UploadFile = File(...)):
     try:
-        pdf_path = run_analysis_pipeline(file_path)
-        return {"status": "success", "pdf_report_url": f"/{pdf_path}"}
+        os.makedirs("temp", exist_ok=True)
+        os.makedirs("static/reports", exist_ok=True)
+
+        filename = Path(file.filename).name
+        file_path = os.path.join("temp", filename)
+        with open(file_path, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+
+        transcript = await transcribe_audio(file_path)
+        speech_score = await analyze_speech(file_path)
+        body_language_score = await analyze_body_language(file_path)
+        feedback = await generate_feedback(transcript, speech_score, body_language_score)
+
+        pdf_filename = filename.rsplit(".", 1)[0] + "_report.pdf"
+        pdf_path = os.path.join("static/reports", pdf_filename)
+
+        await generate_pdf_report(
+            transcript,
+            speech_score,
+            body_language_score,
+            feedback,
+            pdf_path
+        )
+
+        return FileResponse(
+            path=pdf_path,
+            media_type="application/pdf",
+            filename="analysis_report.pdf"
+        )
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Video analysis failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
 
 @app.post("/api/youtube-transcript")
 async def youtube_transcript_api(request: YouTubeRequest):
     if not youtube_converter:
         raise HTTPException(status_code=503, detail="YouTube Converter unavailable")
-    result = youtube_converter.youtube_to_transcript(request.url)
-    if not result["success"]:
-        raise HTTPException(status_code=500, detail=result["error"])
-    return result
+    try:
+        result = youtube_converter.youtube_to_transcript(request.url)
+        if not result["success"]:
+            raise HTTPException(status_code=500, detail=result["error"])
+        return {
+            "success": True,
+            "title": result["video_info"]["title"],
+            "duration": result["video_info"]["duration"],
+            "language": result["transcript"]["language"],
+            "pdf_url": result["pdf_url"],
+            "transcript": result["transcript"]["text"]
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/api/youtube-transcript")
-def get_youtube_transcript(url: str = Query(..., description="YouTube video URL")):
+async def get_youtube_transcript(url: str = Query(...)):
+    if not youtube_converter:
+        raise HTTPException(status_code=503, detail="YouTube Converter unavailable")
     try:
         result = youtube_converter.youtube_to_transcript(url)
         if not result["success"]:
             return JSONResponse(status_code=500, content={"error": result["error"]})
         return {
+            "success": True,
             "title": result["video_info"]["title"],
             "duration": result["video_info"]["duration"],
             "language": result["transcript"]["language"],
-            "pdf_url": result["pdf_url"]
+            "pdf_url": result["pdf_url"],
+            "transcript": result["transcript"]["text"]
         }
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
@@ -271,7 +321,7 @@ async def catch_all(path: str):
         return FileResponse(index_file)
     raise HTTPException(status_code=404, detail="Page not found")
 
-# --- Run Servers (Optional for local dev) ---
+# --- Dev Server Starter ---
 def start_nextjs_server():
     if os.path.exists("package.json"):
         npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
@@ -287,10 +337,13 @@ def start_chat_server():
 
 if __name__ == "__main__":
     print("Starting PlacementPro backend...")
+
     if os.getenv("IN_DOCKER") != "true":
         chat_proc = start_chat_server()
         next_proc = start_nextjs_server()
+
         import atexit
         atexit.register(lambda: chat_proc.terminate() if chat_proc else None)
         atexit.register(lambda: next_proc.terminate() if next_proc else None)
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=os.getenv("RELOAD", "false") == "true")
+
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=os.getenv("RELOAD", "false") == "true")
