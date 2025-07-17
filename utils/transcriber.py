@@ -3,46 +3,38 @@ import tempfile
 import subprocess
 import os
 
-# Load Whisper model once globally
-model = whisper.load_model("base")
-
-def extract_audio_with_docker(video_path: str, audio_path: str):
-    """
-    Extract audio from video using Docker FFmpeg container.
-    Ensure `temp` is mounted in docker-compose.yml.
-    """
-    container_video = f"/app/{os.path.basename(video_path)}"
-    container_audio = f"/app/{os.path.basename(audio_path)}"
-
-    command = [
-        "docker", "exec", "ffmpeg",
-        "ffmpeg", "-y",
-        "-i", container_video,
-        "-ac", "1", "-ar", "16000",
-        container_audio
-    ]
-
-    try:
-        subprocess.run(command, check=True)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"FFmpeg via Docker failed: {e}")
-
 def transcribe_audio(video_path: str) -> str:
-    """
-    Extract audio and run Whisper transcription.
-    """
+    # Load the Whisper model
+    model = whisper.load_model("base")
+
+
     if not os.path.exists(video_path):
-        raise FileNotFoundError(f"Video not found: {video_path}")
+        raise FileNotFoundError(f"Video file not found: {video_path}")
+    
+    # Path to ffmpeg (update this if not in PATH)
+    ffmpeg_path = "ffmpeg"  # or e.g., "C:/ffmpeg/bin/ffmpeg.exe"
 
-    # Ensure temp folder exists
-    os.makedirs("temp", exist_ok=True)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav", dir="temp") as tmp:
-        audio_path = tmp.name
+    # Create temporary WAV file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
+        audio_path = temp_audio.name
 
+    # Convert video to mono 16kHz audio using ffmpeg
     try:
-        extract_audio_with_docker(video_path, audio_path)
-        result = model.transcribe(audio_path)
-        return result["text"].strip()
-    finally:
-        if os.path.exists(audio_path):
-            os.remove(audio_path)
+        subprocess.check_call([
+            ffmpeg_path, "-y", "-i", video_path,
+            "-ac", "1", "-ar", "16000",
+            audio_path
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except FileNotFoundError:
+        raise FileNotFoundError("ffmpeg not found. Please install ffmpeg and add it to your PATH.")
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"ffmpeg failed to convert the audio: {e}")
+
+    # Transcribe using Whisper
+    result = model.transcribe(audio_path)
+
+    # Clean up temp file
+    os.remove(audio_path)
+
+    # Return transcript text
+    return result["text"].strip()

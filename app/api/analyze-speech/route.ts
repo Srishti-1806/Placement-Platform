@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     backendFormData.append("file", file);
 
     // Try fetching from backend
-    response = await fetch(`${BACKEND_URL}/api/analyze`, {
+    response = await fetch(${BACKEND_URL}/api/analyze, {
       method: "POST",
       body: backendFormData,
     });
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     // If response is not OK (like 500, 400), throw an error
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Backend analysis failed: ${errorText}`);
+      throw new Error(Backend analysis failed: ${errorText});
     }
 
     // Parse the blob (PDF)
@@ -48,4 +48,3 @@ export async function POST(request: NextRequest) {
     console.log("Analysis request complete");
   }
 }
-

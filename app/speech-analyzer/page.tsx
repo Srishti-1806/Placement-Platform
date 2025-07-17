@@ -42,8 +42,8 @@ import { AuthGuard } from "@/components/auth-guard";
 
 interface AnalysisResult {
   transcript: string;
-  speech_score: string;
-  body_language_score: string;
+  speech_score: number;
+  body_language_score: number;
   total_score: number;
   feedback: string;
   pdf_url: string;
@@ -70,7 +70,7 @@ export default function SpeechAnalyzerPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("api/analyze-speech", {
+      const response = await fetch("http://127.0.0.1:8000/api/analyze", {
         method: "POST",
         body: formData,
       });
@@ -155,8 +155,8 @@ export default function SpeechAnalyzerPage() {
                 ][i % 6]
               }`}
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
+                left: ${Math.random() * 100}%,
+                top: ${Math.random() * 100}%,
               }}
             />
           ))}
@@ -339,19 +339,19 @@ export default function SpeechAnalyzerPage() {
                 }}
               >
                 <Card
-                  className={`bg-gradient-to-br ${feature.bgGradient} border ${feature.borderColor} backdrop-blur-xl hover:shadow-2xl transition-all duration-500 h-full relative overflow-hidden group`}
+                  className={bg-gradient-to-br ${feature.bgGradient} border ${feature.borderColor} backdrop-blur-xl hover:shadow-2xl transition-all duration-500 h-full relative overflow-hidden group}
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <CardContent className="p-4 text-center relative">
                     <motion.div
                       whileHover={{ rotate: 360, scale: 1.1 }}
                       transition={{ duration: 0.8 }}
-                      className={`h-8 w-8 mx-auto mb-3 p-2 rounded-full bg-gradient-to-r ${feature.gradient} shadow-lg`}
+                      className={h-8 w-8 mx-auto mb-3 p-2 rounded-full bg-gradient-to-r ${feature.gradient} shadow-lg}
                     >
                       <feature.icon className="h-4 w-4 text-white" />
                     </motion.div>
                     <h3
-                      className={`text-base font-semibold text-transparent bg-clip-text bg-gradient-to-r ${feature.gradient} mb-2`}
+                      className={text-base font-semibold text-transparent bg-clip-text bg-gradient-to-r ${feature.gradient} mb-2}
                     >
                       {feature.title}
                     </h3>
@@ -732,7 +732,7 @@ export default function SpeechAnalyzerPage() {
                               repeat: Infinity,
                               delay: index * 0.3,
                             }}
-                            className={`w-12 h-12 mx-auto mb-3 bg-gradient-to-r ${step.color} rounded-full flex items-center justify-center`}
+                            className={w-12 h-12 mx-auto mb-3 bg-gradient-to-r ${step.color} rounded-full flex items-center justify-center}
                           >
                             <step.icon className="h-6 w-6 text-white" />
                           </motion.div>
@@ -865,17 +865,17 @@ export default function SpeechAnalyzerPage() {
       }}
     >
       <Card
-        className={`bg-gradient-to-br ${card.bgGradient} border ${card.borderColor} backdrop-blur-xl shadow-2xl h-full relative overflow-hidden group`}
+        className={bg-gradient-to-br ${card.bgGradient} border ${card.borderColor} backdrop-blur-xl shadow-2xl h-full relative overflow-hidden group}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
         <CardHeader className="relative p-4">
           <CardTitle
-            className={`flex items-center space-x-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r ${card.gradient}`}
+            className={flex items-center space-x-2 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r ${card.gradient}}
           >
             <motion.div
               whileHover={{ rotate: 360 }}
               transition={{ duration: 0.8 }}
-              className={`p-1 rounded bg-gradient-to-r ${card.gradient}`}
+              className={p-1 rounded bg-gradient-to-r ${card.gradient}}
             >
               <card.icon className="h-3 w-3 text-white" />
             </motion.div>
@@ -896,7 +896,7 @@ export default function SpeechAnalyzerPage() {
                   duration: 0.8,
                   type: "spring",
                 }}
-                className={`text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r ${card.gradient} mb-1`}
+                className={text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r ${card.gradient} mb-1}
               >
                 {Number(card.score).toFixed(2)}
               </motion.div>

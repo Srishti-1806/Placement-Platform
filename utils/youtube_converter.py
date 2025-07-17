@@ -1,17 +1,61 @@
+import yt_dlp
+import whisper
 import os
 import tempfile
-import traceback
-from pytube import YouTube
-import whisper
+from pathlib import Path
+import re
 from fpdf import FPDF
-from datetime import timedelta
-
 
 class YouTubeConverter:
-    def __init__(self):
+    def extract_video_id(url):
+        """Extract video ID from YouTube URL"""
+        patterns = [
+            r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)',
+            r'youtube\.com\/watch\?.*v=([^&\n?#]+)'
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, url)
+            if match:
+                return match.group(1)
+        raise ValueError("Invalid YouTube URL")
+
+    def download_youtube_audio(self, url, output_path):
+        """Download audio from YouTube video"""
         try:
-            print("[INFO] Loading Whisper model...")
-            self.model = whisper.load_model("base")
+            print("Downloading audio from:", url)
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': output_path,
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+                'quiet': True,
+                'no_warnings': True,
+                'noplaylist': True,
+                'http_headers': {
+                'User-Agent': (
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                    'AppleWebKit/537.36 (KHTML, like Gecko) '
+                    'Chrome/114.0.0.0 Safari/537.36'
+                ),
+                'Accept': '/',
+                'Accept-Language': 'en-US,en;q=0.9'}
+                # Removed custom http_headers to avoid 403 error
+            }
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                title = info.get('title', 'Unknown')
+                duration = info.get('duration', 0)
+
+            return {
+                'title': title,
+                'duration': duration,
+                'audio_path': output_path.replace('.%(ext)s', '.mp3')
+            }
+
         except Exception as e:
             print("[ERROR] Failed to load Whisper model:", str(e))
             raise
@@ -19,36 +63,17 @@ class YouTubeConverter:
         self.output_dir = "static/transcripts"
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def sanitize_youtube_url(self, url: str) -> str:
-        # Strip timestamps or additional query params like &t= etc.
-        if "&" in url:
-            url = url.split("&")[0]
-        return url.strip()
-
     def youtube_to_transcript(self, url: str):
         try:
-            sanitized_url = self.sanitize_youtube_url(url)
-            print(f"[INFO] Processing sanitized YouTube URL: {sanitized_url}")
-
-            try:
-                yt = YouTube(sanitized_url)
-            except Exception as e:
-                import traceback
-                print("[ERROR] Failed to create YouTube object:", str(e))
-                traceback.print_exc()  # <-- This will show the root problem in the terminal.
-                return {
-                    "success": False,
-                    "error": f"Failed to fetch YouTube video: {str(e)}"
-                }
-
+            print(f"[INFO] Processing YouTube URL: {url}")
+            yt = YouTube(url)
 
             audio_stream = yt.streams.filter(only_audio=True).first()
             if not audio_stream:
                 return {"success": False, "error": "No audio stream found for this video."}
 
-            title = yt.title.replace(" ", "_").replace("/", "_").replace("\\", "_")
-            duration_seconds = int(yt.length)
-            duration_str = str(timedelta(seconds=duration_seconds))
+            title = yt.title.replace(" ", "").replace("/", "").replace("\\", "_")
+            duration = str(timedelta(seconds=int(yt.length)))
 
             # Download audio to temp file
             with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp_file:
@@ -77,7 +102,7 @@ class YouTubeConverter:
             pdf.set_font("Arial", size=12)
             pdf.multi_cell(
                 0, 10,
-                f"Title: {yt.title}\nDuration: {duration_str}\nLanguage: {language}\n\nTranscript:\n{transcript_text}"
+                f"Title: {yt.title}\nDuration: {duration}\nLanguage: {language}\n\nTranscript:\n{transcript_text}"
             )
 
             pdf_filename = f"{title}_transcript.pdf"
@@ -98,15 +123,13 @@ class YouTubeConverter:
                 },
                 "video_info": {
                     "title": yt.title,
-                    "duration": duration_seconds  # Return as seconds for frontend formatting
+                    "duration": duration
                 },
                 "pdf_url": f"/static/transcripts/{pdf_filename}"
             }
 
         except Exception as e:
-            print("[ERROR] Exception during YouTube processing:")
-            traceback.print_exc()
             return {
-                "success": False,
-                "error": f"Exception occurred: {str(e)}"
+                'error': str(e),
+                'success': False
             }

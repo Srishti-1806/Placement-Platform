@@ -6,12 +6,23 @@ from pydantic import BaseModel
 from typing import Optional
 from pathlib import Path
 from PyPDF2 import PdfReader
-
 import os
+import fitz  # PyMuPDF
+from tempfile import NamedTemporaryFile
+from dotenv import load_dotenv
+load_dotenv()
+from langchain.text_splitter import CharacterTextSplitter
+from langchain_core.prompts import PromptTemplate
+from langchain_groq import ChatGroq
+from langchain.chains.summarize import load_summarize_chain
 import shutil
 import subprocess
 import sys
 import uvicorn
+app = FastAPI()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY environment variable not set")
 
 # --- Load custom modules safely ---
 try:
@@ -82,7 +93,9 @@ except Exception as e:
 
 try:
     from utils.youtube_converter import YouTubeConverter
+
     youtube_converter = YouTubeConverter()
+    
     print("YouTube Converter loaded")
 except Exception as e:
     youtube_converter = None
@@ -106,7 +119,7 @@ os.makedirs("static/summaries", exist_ok=True)
 os.makedirs("static/transcripts", exist_ok=True)
 
 # --- FastAPI Init ---
-app = FastAPI(title="PlacementPro API", version="1.0.0")
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -143,14 +156,16 @@ class YouTubeRequest(BaseModel):
 
 class AnalysisResult(BaseModel):
     transcript: str
-    speech_score: float
-    body_language_score: float
-    total_score: float
+    speech_score: int
+    body_language_score: int
+    total_score: int
     feedback: str
     pdf_url: str
 
 
 # --- Utility ---
+
+
 def extract_text_from_pdf(file: UploadFile) -> str:
     try:
         reader = PdfReader(file.file)
@@ -225,119 +240,104 @@ async def ats_score(request: ATSRequest):
 @app.post("/api/analyze", response_model=AnalysisResult)
 async def analyze_video_return_json(file: UploadFile = File(...)):
     try:
-        # Create necessary folders
-        os.makedirs("temp", exist_ok=True)
-        os.makedirs("static/reports", exist_ok=True)
-
-        # Save uploaded file
-        filename = Path(file.filename).name
-        file_path = os.path.join("temp", filename)
-        with open(file_path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
-
-        # Run analysis
-        transcript = await transcribe_audio(file_path)
-        speech_score = await analyze_speech(file_path)
-        body_language_score = await analyze_body_language(file_path)
-        feedback = await generate_feedback(transcript, speech_score, body_language_score)
-
-        # Generate PDF
-        pdf_filename = filename.rsplit(".", 1)[0] + "_report.pdf"
-        pdf_path = os.path.join("static/reports", pdf_filename)
-
-        await generate_pdf_report(
-            transcript,
-            speech_score,
-            body_language_score,
-            feedback,
-            pdf_path
-        )
-
-        # Return result as JSON
-        return AnalysisResult(
-            transcript=transcript,
-            speech_score=round(speech_score, 2),
-            body_language_score=round(body_language_score, 2),
-            total_score=round((speech_score + body_language_score) / 2, 2),
-            feedback=feedback,
-            pdf_url=f"{BACKEND_URL}/static/reports/{pdf_filename}"
-        ).dict
-
+        pdf_filename = filename.replace(".mp4", "_report.pdf")
+        pdf_path = os.path.join("static", "reports", pdf_filename)
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+        generate_pdf_report(transcript, speech_score, body_language_score, feedback, pdf_path)
+        print("✅ PDF generation done")
     except Exception as e:
-        return {"error": str(e)}
+        print("❌ Error in generate_pdf_report:", e)
+    #raise HTTPException(status_code=500, detail=f"generate_pdf_report error: {e}"
+    print("This is transcript",transcript,"\n")
+    print("This is speech_score",speech_score,"\n")
+    print("This is feedback",feedback,"\n")
+    print("This is body_language_score",body_language_score,"\n")
+    
+    return AnalysisResult(
+        transcript=transcript,
+        speech_score=speech_score,
+        body_language_score=body_language_score,
+        total_score=speech_score + body_language_score,
+        feedback=feedback,
+        pdf_url=f"/static/reports/{pdf_filename}"
+    )
 
-
-class YouTubeRequest(BaseModel):
-    url: str
-
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from utils.youtube_converter import YouTubeConverter  # Make sure this path is correct
-
-app = FastAPI()
-
-# Initialize YouTubeConverter
-youtube_converter = YouTubeConverter()
 
 class YouTubeRequest(BaseModel):
     url: str
 
 @app.post("/api/youtube-transcript")
-async def youtube_transcript_api(request: YouTubeRequest):
+async def convert_youtube(request: YouTubeRequest):
+    print("This is youtube url", request.url)
     if not youtube_converter:
-        raise HTTPException(status_code=503, detail="YouTube Converter unavailable")
-    
+        raise HTTPException(status_code=503, detail="YouTube Converter service not available")
     try:
         result = youtube_converter.youtube_to_transcript(request.url)
-        if not result.get("success", False):
-            raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
-        
-        return {
-            "success": True,
-            "title": result["video_info"]["title"],
-            "duration": result["video_info"]["duration"],
-            "language": result["transcript"]["language"],
-            "pdf_url": result["pdf_url"],
-            "transcript": result["transcript"]["text"]
-        }
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-@app.get("/api/youtube-transcript")
-async def get_youtube_transcript(url: str = Query(...)):
-    if not youtube_converter:
-        raise HTTPException(status_code=503, detail="YouTube Converter unavailable")
-    
-    try:
-        result = youtube_converter.youtube_to_transcript(url)
-        if not result.get("success", False):
-            return JSONResponse(status_code=500, content={"error": result.get("error", "Unknown error")})
-        
-        return {
-            "success": True,
-            "title": result["video_info"]["title"],
-            "duration": result["video_info"]["duration"],
-            "language": result["transcript"]["language"],
-            "pdf_url": result["pdf_url"],
-            "transcript": result["transcript"]["text"]
-        }
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-
-@app.post("/api/summarize-pdf")
-async def summarize_pdf(file: UploadFile = File(...)):
-    try:
-        temp_dir = "temp_uploads"
-        os.makedirs(temp_dir, exist_ok=True)
-        temp_path = os.path.join(temp_dir, file.filename)
-        with open(temp_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        result = pdf_summarizer.summarize_pdf(temp_path)
+        print("This is resulttttt",result)
         return result
     except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        print("This is error block",f"YouTube conversion failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"YouTube conversion failed: {str(e)}")
+
+@app.post("/api/summarize")
+async def summarize_pdf(file: UploadFile = File(...)):
+    print("Mai function ko hit toh kar raha hu")
+    llm = ChatGroq(
+        groq_api_key=GROQ_API_KEY,
+        model_name="llama3-8b-8192"
+    )
+    SUMMARY_PROMPT = PromptTemplate.from_template("""
+    Summarize the following content clearly and concisely:
+
+    "{text}"
+
+    Summary:
+    """)
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
+
+    try:
+        print("Save uploaded PDF temporarily")
+        with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(await file.read())
+            tmp_path = tmp.name
+
+        
+        text = ""
+        with fitz.open(tmp_path) as doc:
+            print("Extract text from PDF using PyMuPDF")
+            for page in doc:
+                text += page.get_text()
+                print("Extract text from PDF using PyMuPDF, this is text", text)
+
+
+        os.remove(tmp_path)  # Clean up
+
+        if not text.strip():
+            raise HTTPException(status_code=400, detail="No readable text found in PDF.")
+
+        # Split large text into chunks
+        splitter = CharacterTextSplitter.from_tiktoken_encoder(
+            chunk_size=1500,
+            chunk_overlap=200
+        )
+        docs = splitter.create_documents([text])
+
+        
+        chain = load_summarize_chain(
+            llm=llm,
+            chain_type="map_reduce",
+            map_prompt=SUMMARY_PROMPT,
+            combine_prompt=SUMMARY_PROMPT
+        )
+        summary_result = chain.invoke(docs)
+        print("Create summarization chain", summary_result)
+        return JSONResponse({"summary": summary_result['output_text']})
+
+    except Exception as e:
+        print("NOTA", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/{path:path}")
 async def catch_all(path: str):
@@ -365,7 +365,7 @@ def start_chat_server():
     print("Chat server started")
     return process
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     print("Starting PlacementPro backend...")
 
     if os.getenv("IN_DOCKER") != "true":
@@ -376,4 +376,4 @@ if __name__ == "__main__":
         atexit.register(lambda: chat_proc.terminate() if chat_proc else None)
         atexit.register(lambda: next_proc.terminate() if next_proc else None)
 
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=os.getenv("RELOAD", "false") == "true")
+    uvicorn.run("main:app", port=int(os.getenv("PORT", 8000)), reload=os.getenv("RELOAD", "false") == "true")
