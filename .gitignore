@@ -96,3 +96,7 @@ temp/
 dist/
 build/
 .next/
+
+ffplay.exe
+ffmpeg.exe
+ffprobe.exe
