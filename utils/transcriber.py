@@ -7,7 +7,7 @@ def transcribe_audio(video_path: str) -> str:
     # Load the Whisper model
     model = whisper.load_model("base")
 
-
+    # Check if the video file exists
     if not os.path.exists(video_path):
         raise FileNotFoundError(f"Video file not found: {video_path}")
     

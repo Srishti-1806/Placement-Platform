@@ -231,13 +231,74 @@ async def score_resume(resume: UploadFile, job_description: str = Form(...)):
     result = ats_calculator.calculate_ats_score(resume_text, job_description)
     return result
 
-@app.post("/ats/score")
-async def ats_score(request: ATSRequest):
+@app.post("/api/ats-calculator")
+async def ats_calculator_api(request: ATSRequest):
     if not ats_calculator:
         raise HTTPException(status_code=503, detail="ATS Calculator unavailable")
     return ats_calculator.calculate_ats_score(request.resume_text, request.job_description)
 
 @app.post("/api/analyze", response_model=AnalysisResult)
+async def analyze_video(file: UploadFile = File(...)):
+    print("HELLO ANALYSER")
+    os.makedirs("temp", exist_ok=True)
+    os.makedirs("static/reports", exist_ok=True)
+    filename = Path(file.filename).name
+    file_path = os.path.join("temp", filename)
+
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    with open(file_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    try:
+        transcript = transcribe_audio(file_path)
+        print("✅ Transcript done")
+    except Exception as e:
+        print("❌ Error in transcribe_audio:", e)
+        raise HTTPException(status_code=500, detail=f"transcribe_audio error: {e}")
+
+    try:
+        speech_score = analyze_speech(file_path)
+        print("✅ Speech analysis done")
+    except Exception as e:
+        print("❌ Error in analyze_speech:", e)
+        raise HTTPException(status_code=500, detail=f"analyze_speech error: {e}")
+
+    try:
+        body_language_score = analyze_body_language(file_path)
+        print("✅ Body language analysis done")
+    except Exception as e:
+        print("❌ Error in analyze_body_language:", e)
+        raise HTTPException(status_code=500, detail=f"body_language_score error: {e}")
+
+    try:
+        feedback = generate_feedback(transcript, speech_score, body_language_score)
+        print("✅ Feedback generation done")
+    except Exception as e:
+        print("❌ Error in generate_feedback:", e)
+        raise HTTPException(status_code=500, detail=f"generate_feedback error: {e}")
+
+    try:
+        pdf_filename = filename.replace(".mp4", "_report.pdf")
+        pdf_path = os.path.join("static", "reports", pdf_filename)
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+        generate_pdf_report(transcript, speech_score, body_language_score, feedback, pdf_path)
+        print("✅ PDF generation done")
+    except Exception as e:
+        print("❌ Error in generate_pdf_report:", e)
+        raise HTTPException(status_code=500, detail=f"generate_pdf_report error: {e}")
+
+    return AnalysisResult(
+        transcript=transcript,
+        speech_score=speech_score,
+        body_language_score=body_language_score,
+        total_score=speech_score + body_language_score,
+        feedback=feedback,
+        pdf_url=f"/static/reports/{pdf_filename}"
+    ).dict()
+
 async def analyze_video_return_json(file: UploadFile = File(...)):
     try:
         pdf_filename = filename.replace(".mp4", "_report.pdf")
@@ -269,18 +330,15 @@ class YouTubeRequest(BaseModel):
 
 @app.post("/api/youtube-transcript")
 async def convert_youtube(request: YouTubeRequest):
-    print("This is youtube url", request.url)
     if not youtube_converter:
         raise HTTPException(status_code=503, detail="YouTube Converter service not available")
     try:
         result = youtube_converter.youtube_to_transcript(request.url)
-        print("This is resulttttt",result)
         return result
     except Exception as e:
-        print("This is error block",f"YouTube conversion failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"YouTube conversion failed: {str(e)}")
 
-@app.post("/api/summarize")
+@app.post("/api/summarize-pdf")
 async def summarize_pdf(file: UploadFile = File(...)):
     print("Mai function ko hit toh kar raha hu")
     llm = ChatGroq(
@@ -365,7 +423,7 @@ def start_chat_server():
     print("Chat server started")
     return process
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     print("Starting PlacementPro backend...")
 
     if os.getenv("IN_DOCKER") != "true":
