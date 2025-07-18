@@ -40,6 +40,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthGuard } from "@/components/auth-guard";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 interface AnalysisResult {
   transcript: string;
   speech_score: number;
@@ -70,7 +72,7 @@ export default function SpeechAnalyzerPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://127.0.0.1:8000/api/analyze", {
+      const response = await fetch(`${BACKEND_URL}/api/analyze`, {
         method: "POST",
         body: formData,
       });
