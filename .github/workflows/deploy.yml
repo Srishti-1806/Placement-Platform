@@ -6,7 +6,7 @@ on:
       skip_build:
         description: 'Skip Docker build (use existing image)'
         required: false
-        default: 'true'
+        default: true
         type: boolean
   push:
     branches: [ main ]
