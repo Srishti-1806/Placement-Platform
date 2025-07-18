@@ -68,8 +68,8 @@ jobs:
           then
             echo "Docker not found. Installing Docker..."
             sudo yum update -y
-            sudo amazon-linux-extras install docker -y
-            sudo service docker start
+            sudo dnf install docker -y
+            sudo service systemctl docker start
             sudo usermod -aG docker $USER
           else
             echo "Docker is already installed."
