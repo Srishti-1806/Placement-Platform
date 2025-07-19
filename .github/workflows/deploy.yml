@@ -54,7 +54,7 @@ jobs:
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         port: 22
         timeout: 300s
-        command_timeout: 10m
+        command_timeout: 30m
         script: |
           set -e
           
