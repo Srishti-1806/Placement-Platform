@@ -120,6 +120,7 @@ jobs:
             --restart unless-stopped \
             --memory="1400m" \
             --cpus="1.2" \
+            -e GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
             $DOCKER_USERNAME/placementpro:latest
           
           echo "⏳ Waiting for services..."
