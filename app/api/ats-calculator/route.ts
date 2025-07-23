@@ -4,60 +4,60 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export async function POST(request: NextRequest) {
   try {
-    const { resume_text, job_description } = await request.json();
+    const { resumeText, jobDescription } = await request.json()
 
-    if (!resume_text || !job_description) {
+    if (!resumeText || !jobDescription) {
       return NextResponse.json(
         {
           success: false,
           error: "Resume text and job description are required",
         },
         { status: 400 },
-      );
+      )
     }
 
-    // Call Python backend
+    // Try to call Python backend first
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ats-calculator`, {
+      const response = await fetch(`${BACKEND_URL}/api/score`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          resume_text,
-          job_description,
+          resume_text: resumeText,
+          job_description: jobDescription,
         }),
-        signal: AbortSignal.timeout(10000),
-      });
+        signal: AbortSignal.timeout(10000), // 10 second timeout
+      })
 
       if (response.ok) {
-        const result = await response.json();
+        const result = await response.json()
         return NextResponse.json({
           success: true,
           ...result,
-        });
+        })
       }
     } catch (backendError) {
-      console.log("Backend not available, using client-side calculation");
+      console.log("Backend not available, using client-side calculation")
     }
 
     // Fallback to client-side calculation
-    const atsResult = calculateATSClientSide(resume_text, job_description);
+    const atsResult = calculateATSClientSide(resumeText, jobDescription)
 
     return NextResponse.json({
       success: true,
       ...atsResult,
       note: "Calculated using client-side algorithm. Start Python backend for advanced analysis.",
-    });
+    })
   } catch (error) {
-    console.error("ATS calculation error:", error);
+    console.error("ATS calculation error:", error)
     return NextResponse.json(
       {
         success: false,
         error: "Failed to calculate ATS score",
       },
       { status: 500 },
-    );
+    )
   }
 }
 
