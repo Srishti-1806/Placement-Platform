@@ -1,226 +1,167 @@
-import { type NextRequest, NextResponse } from "next/server"
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import nltk
+import string
+import re
+import logging
+from typing import Dict, List, Tuple
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
-export async function POST(request: NextRequest) {
-  try {
-    const { resumeText, jobDescription } = await request.json()
+# Ensure NLTK stopwords are available
+def ensure_nltk_data():
+    try:
+        nltk.data.find('corpora/stopwords')
+    except LookupError:
+        nltk.download('stopwords')
 
-    if (!resumeText || !jobDescription) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Resume text and job description are required",
-        },
-        { status: 400 },
-      )
-    }
+ensure_nltk_data()
 
-    // Try to call Python backend first
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/score`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          resume_text: resumeText,
-          job_description: jobDescription,
-        }),
-        signal: AbortSignal.timeout(10000), // 10 second timeout
-      })
+from nltk.corpus import stopwords
 
-      if (response.ok) {
-        const result = await response.json()
-        return NextResponse.json({
-          success: true,
-          ...result,
-        })
-      }
-    } catch (backendError) {
-      console.log("Backend not available, using client-side calculation")
-    }
+class ATSCalculator:
+    def __init__(self):
+        self.stop_words = set(stopwords.words('english'))
+        self.TOP_JOB_KEYWORDS = 30
+        self.TOP_RESUME_KEYWORDS = 50
+        self.KEYWORDS_TO_MATCH = 20
 
-    // Fallback to client-side calculation
-    const atsResult = calculateATSClientSide(resumeText, jobDescription)
+    def preprocess(self, text: str) -> str:
+        """Clean and preprocess text for ATS analysis"""
+        if not text:
+            return ""
 
-    return NextResponse.json({
-      success: true,
-      ...atsResult,
-      note: "Calculated using client-side algorithm. Start Python backend for advanced analysis.",
-    })
-  } catch (error) {
-    console.error("ATS calculation error:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to calculate ATS score",
-      },
-      { status: 500 },
-    )
-  }
-}
+        text = text.lower()
+        text = re.sub(r'[^a-zA-Z\s]', '', text)
+        text = ' '.join(text.split())
 
-function calculateATSClientSide(resumeText: string, jobDescription: string) {
-  // Simple client-side ATS calculation
-  const resumeWords = extractKeywords(resumeText.toLowerCase())
-  const jobWords = extractKeywords(jobDescription.toLowerCase())
+        tokens = text.split()
+        tokens = [word for word in tokens if word not in self.stop_words and len(word) > 2]
 
-  // Find matching keywords
-  const matchedKeywords: string[] = []
-  const missingKeywords: string[] = []
+        return ' '.join(tokens)
 
-  jobWords.forEach((jobWord) => {
-    if (
-      resumeWords.some(
-        (resumeWord) =>
-          resumeWord.includes(jobWord) || jobWord.includes(resumeWord) || levenshteinDistance(resumeWord, jobWord) <= 2,
-      )
-    ) {
-      matchedKeywords.push(jobWord)
-    } else {
-      missingKeywords.push(jobWord)
-    }
-  })
+    def extract_keywords(self, text: str, top_n: int = 20) -> List[str]:
+        """Extract top keywords from text"""
+        processed_text = self.preprocess(text)
 
-  // Calculate scores
-  const keywordMatchScore = jobWords.length > 0 ? (matchedKeywords.length / jobWords.length) * 100 : 0
-  const overallScore = Math.min(keywordMatchScore + Math.random() * 20, 95) // Add some variance
+        if not processed_text:
+            return []
 
-  // Generate recommendations
-  const recommendations = generateRecommendations(overallScore, missingKeywords, matchedKeywords)
+        vectorizer = TfidfVectorizer(max_features=top_n, ngram_range=(1, 2), stop_words='english')
+        try:
+            tfidf_matrix = vectorizer.fit_transform([processed_text])
+            feature_names = vectorizer.get_feature_names_out()
+            scores = tfidf_matrix.toarray()[0]
 
-  return {
-    overall_score: Math.round(overallScore * 100) / 100,
-    similarity_score: Math.round((overallScore - 5) * 100) / 100,
-    keyword_match: Math.round(keywordMatchScore * 100) / 100,
-    matched_keywords: matchedKeywords.slice(0, 10),
-    missing_keywords: missingKeywords.slice(0, 10),
-    recommendations,
-    job_keywords: jobWords.slice(0, 15),
-    resume_keywords: resumeWords.slice(0, 15),
-  }
-}
+            keyword_scores = list(zip(feature_names, scores))
+            keyword_scores.sort(key=lambda x: x[1], reverse=True)
 
-function extractKeywords(text: string): string[] {
-  // Remove common stop words and extract meaningful keywords
-  const stopWords = new Set([
-    "the",
-    "a",
-    "an",
-    "and",
-    "or",
-    "but",
-    "in",
-    "on",
-    "at",
-    "to",
-    "for",
-    "of",
-    "with",
-    "by",
-    "is",
-    "are",
-    "was",
-    "were",
-    "be",
-    "been",
-    "have",
-    "has",
-    "had",
-    "do",
-    "does",
-    "did",
-    "will",
-    "would",
-    "could",
-    "should",
-    "may",
-    "might",
-    "must",
-    "can",
-    "this",
-    "that",
-    "these",
-    "those",
-    "i",
-    "you",
-    "he",
-    "she",
-    "it",
-    "we",
-    "they",
-    "me",
-    "him",
-    "her",
-    "us",
-    "them",
-  ])
+            return [keyword for keyword, score in keyword_scores if score > 0]
+        except Exception as e:
+            logging.error(f"Keyword extraction error: {e}")
+            return []
 
-  return text
-    .replace(/[^\w\s]/g, " ") // Remove punctuation
-    .split(/\s+/) // Split by whitespace
-    .filter((word) => word.length > 2 && !stopWords.has(word)) // Filter short words and stop words
-    .filter((word, index, arr) => arr.indexOf(word) === index) // Remove duplicates
-    .slice(0, 50) // Limit to top 50 keywords
-}
+    def calculate_ats_score(self, resume_text: str, job_description: str) -> Dict:
+        """Calculate comprehensive ATS score between resume and job description"""
+        resume_clean = self.preprocess(resume_text)
+        job_desc_clean = self.preprocess(job_description)
 
-function levenshteinDistance(str1: string, str2: string): number {
-  const matrix = []
+        if not resume_clean or not job_desc_clean:
+            return {
+                "overall_score": 0,
+                "keyword_match": 0,
+                "missing_keywords": [],
+                "matched_keywords": [],
+                "recommendations": ["Please provide valid resume and job description text."]
+            }
 
-  for (let i = 0; i <= str2.length; i++) {
-    matrix[i] = [i]
-  }
+        try:
+            vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words='english')
+            vectors = vectorizer.fit_transform([resume_clean, job_desc_clean])
+            similarity_score = cosine_similarity(vectors[0:1], vectors[1:2])[0][0]
 
-  for (let j = 0; j <= str1.length; j++) {
-    matrix[0][j] = j
-  }
+            job_keywords = self.extract_keywords(job_description, self.TOP_JOB_KEYWORDS)
+            resume_keywords = self.extract_keywords(resume_text, self.TOP_RESUME_KEYWORDS)
 
-  for (let i = 1; i <= str2.length; i++) {
-    for (let j = 1; j <= str1.length; j++) {
-      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1]
-      } else {
-        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
-      }
-    }
-  }
+            job_keywords_set = set(job_keywords[:self.KEYWORDS_TO_MATCH])
+            resume_keywords_set = set(resume_keywords)
 
-  return matrix[str2.length][str1.length]
-}
+            matched_keywords = list(job_keywords_set & resume_keywords_set)
+            missing_keywords = list(job_keywords_set - resume_keywords_set)
 
-function generateRecommendations(score: number, missingKeywords: string[], matchedKeywords: string[]): string[] {
-  const recommendations: string[] = []
+            keyword_match_score = (len(matched_keywords) / len(job_keywords_set)) * 100 if job_keywords_set else 0
+            overall_score = (similarity_score * 0.6 + (keyword_match_score / 100) * 0.4) * 100
 
-  if (score < 30) {
-    recommendations.push("🔴 Low match score. Consider significant resume improvements.")
-  } else if (score < 60) {
-    recommendations.push("🟡 Moderate match. Some improvements needed.")
-  } else if (score < 80) {
-    recommendations.push("🟢 Good match! Your resume aligns well with the job.")
-  } else {
-    recommendations.push("🌟 Excellent match! You're a strong candidate for this role.")
-  }
+            recommendations = self.generate_recommendations(
+                overall_score, missing_keywords, matched_keywords
+            )
+  
+            return {
+                "overall_score": round(overall_score, 2),
+                "similarity_score": round(similarity_score * 100, 2),
+                "keyword_match": round(keyword_match_score, 2),
+                "matched_keywords": matched_keywords[:10],
+                "missing_keywords": missing_keywords[:10],
+                "recommendations": recommendations,
+                "job_keywords": job_keywords[:15],
+                "resume_keywords": resume_keywords[:15]
+            }
 
-  if (missingKeywords.length > 0) {
-    recommendations.push(`📝 Add these key terms: ${missingKeywords.slice(0, 5).join(", ")}`)
-  }
+        except Exception as e:
+            logging.error(f"Error calculating ATS score: {e}")
+            return {
+                "overall_score": 0,
+                "error": f"Error calculating ATS score: {str(e)}",
+                "recommendations": ["Please check your input text and try again."]
+            }
 
-  if (matchedKeywords.length > 0) {
-    recommendations.push(`✅ Great! You have these relevant skills: ${matchedKeywords.slice(0, 3).join(", ")}`)
-  }
+    def generate_recommendations(self, score: float, missing_keywords: List[str], matched_keywords: List[str]) -> List[str]:
+        """Generate personalized recommendations based on ATS analysis"""
+        recommendations = []
 
-  // General recommendations based on score
-  if (score < 70) {
-    recommendations.push("💡 Use exact keywords from the job description")
-    recommendations.push("📊 Quantify your achievements with numbers")
-    recommendations.push("🎯 Tailor your resume for this specific role")
-  }
+        if score < 30:
+            recommendations.append("🔴 Low match score. Consider significant resume improvements.")
+        elif score < 60:
+            recommendations.append("🟡 Moderate match. Some improvements needed.")
+        else:
+            recommendations.append("🟢 Good match! Your resume aligns well with the job.")
 
-  if (score < 50) {
-    recommendations.push("📋 Include relevant certifications and skills")
-    recommendations.push("🔄 Reorganize your resume to highlight matching experience")
-  }
+        if missing_keywords:
+            recommendations.append(f"📝 Add these key terms: {', '.join(missing_keywords[:5])}")
 
-  return recommendations
-}
+        if matched_keywords:
+            recommendations.append(f"✅ Great! You have these relevant skills: {', '.join(matched_keywords[:3])}")
+
+        if score < 70:
+            recommendations.extend([
+                "💡 Use exact keywords from the job description",
+                "📊 Quantify your achievements with numbers",
+                "🎯 Tailor your resume for this specific role",
+                "📋 Include relevant certifications and skills"
+            ])
+
+        return recommendations
+
+# Example usage
+if __name__ == "__main__":
+    calculator = ATSCalculator()
+
+    resume = """
+    Experienced Python developer with 3+ years in web development. 
+    Skilled in Flask, Django, REST APIs, and database design. 
+    Strong problem-solving abilities and excellent teamwork skills.
+    Built 5+ production applications serving 10k+ users.
+    """
+
+    job = """
+    We are looking for a Python developer with experience in Flask, 
+    REST APIs, and SQL databases. The candidate must be a good team player 
+    with strong problem-solving skills. Experience with Django is a plus.
+    """
+
+    result = calculator.calculate_ats_score(resume, job)
+    print(f"✅ ATS Score: {result['overall_score']}%")
+    print(f"📊 Keyword Match: {result['keyword_match']}%")
+    print(f"🎯 Matched Keywords: {result['matched_keywords']}")
+    print(f"❌ Missing Keywords: {result['missing_keywords']}")
