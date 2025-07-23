@@ -48,10 +48,7 @@ export default function ATSCalculatorPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          resume_text: resumeText,
-          job_description: jobDescription,
-        }),
+        body: JSON.stringify({ resume: resumeText, job: jobDescription }),
       });
 
       const data = await response.json();
