@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     backendFormData.append("file", file)
 
     // Call the Python FastAPI backend
-    const response = await fetch(`${BACKEND_URL}/api/summarize-pdf`, {
+    const response = await fetch(`http://localhost:8000/api/summarize`, {
       method: "POST",
       body: backendFormData,
     })
