@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const controller = new AbortController();
     timeoutId = setTimeout(() => controller.abort(), 300000); // 5 mins
 
-    const response = await fetch(`${BACKEND_URL}/api/youtube-transcript`, {
+    const response = await fetch(`http://localhost:8000/api/youtube-transcript`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url }),
