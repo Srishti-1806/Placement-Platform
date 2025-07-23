@@ -188,6 +188,15 @@ Chat feature ensures anonymity and data encryption.
 
 Open-source and transparent.
 
+Deployment Sites
+🌐 Main Website: http://13.60.246.221
+🎨 Frontend: http://13.60.246.221:3000
+🔧 Backend API: http://13.60.246.221:8000
+💬 Chat Server: http://13.60.246.221:5000
+📖 API Docs: http://13.60.246.221:8000/docs
+🏥 Health Check: http://13.60.246.221:8000/api/health
+
+
 🙌 Contributing
 We welcome contributions! Please raise an issue or open a PR with detailed information.
 
