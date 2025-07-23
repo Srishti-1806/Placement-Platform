@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import type React from "react";
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,6 +33,7 @@ import {
   Gauge,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SummaryResult {
   summary: string;
@@ -43,37 +45,10 @@ interface SummaryResult {
 
 export default function PDFSummaryPage() {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [summaryResult, setSummaryResult] = useState<SummaryResult | null>(null);
+  const [summaryResult, setSummaryResult] = useState<SummaryResult | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
-  const [orbConfigs, setOrbConfigs] = useState([]);
-  const [patternConfigs, setPatternConfigs] = useState([]);
-  const [uploadPatterns, setUploadPatterns] = useState([]);
-
-  useEffect(() => {
-    setOrbConfigs(
-      Array.from({ length: 8 }).map(() => ({
-        x: Math.random() * 200 - 100,
-        y: Math.random() * 150 - 75,
-        duration: 12 + Math.random() * 6,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-      }))
-    );
-    setPatternConfigs(
-      Array.from({ length: 15 }).map(() => ({
-        duration: 20 + Math.random() * 10,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-      }))
-    );
-    setUploadPatterns(
-      Array.from({ length: 6 }).map(() => ({
-        left: `${Math.random() * 80}%`,
-        top: `${Math.random() * 80}%`,
-        duration: 8 + Math.random() * 2,
-      }))
-    );
-  }, []);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -93,7 +68,7 @@ export default function PDFSummaryPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch("/api/summarize-pdf", {
+      const response = await fetch("http://127.0.0.1:8000/api/summarize", {
         method: "POST",
         body: formData,
       });
@@ -103,6 +78,7 @@ export default function PDFSummaryPage() {
       }
 
       const result = await response.json();
+      console.log("this is result", result);
       const responseData: SummaryResult = {
         summary: result.summary,
         original_word_count: result.word_count_original,
@@ -110,6 +86,7 @@ export default function PDFSummaryPage() {
         compression_ratio: result.compressed_ratio,
         pdf_url: result.pdf_path,
       };
+      console.log("this is responseDATA", responseData);
       setSummaryResult(responseData);
     } catch (err) {
       setError("Failed to summarize PDF. Please try again.");
@@ -134,18 +111,19 @@ export default function PDFSummaryPage() {
 
       {/* Dynamic Floating Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {orbConfigs.map((config, i) => (
+        {/* Large Floating Orbs */}
+        {Array.from({ length: 8 }).map((_, i) => (
           <motion.div
             key={i}
             animate={{
               scale: [1, 1.4, 1],
               rotate: [0, 180, 360],
               opacity: [0.1, 0.4, 0.1],
-              x: [0, config.x],
-              y: [0, config.y],
+              x: [0, Math.random() * 200 - 100],
+              y: [0, Math.random() * 150 - 75],
             }}
             transition={{
-              duration: config.duration,
+              duration: 12 + Math.random() * 6,
               repeat: Infinity,
               ease: "easeInOut",
               delay: i * 1.5,
@@ -163,13 +141,14 @@ export default function PDFSummaryPage() {
               ][i % 8]
             }`}
             style={{
-              left: config.left,
-              top: config.top,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
             }}
           />
         ))}
 
-        {patternConfigs.map((config, i) => (
+        {/* Geometric Patterns */}
+        {Array.from({ length: 15 }).map((_, i) => (
           <motion.div
             key={`pattern-${i}`}
             animate={{
@@ -178,15 +157,15 @@ export default function PDFSummaryPage() {
               opacity: [0.1, 0.3, 0.1],
             }}
             transition={{
-              duration: config.duration,
+              duration: 20 + Math.random() * 10,
               repeat: Infinity,
               ease: "linear",
               delay: i * 0.8,
             }}
             className="absolute w-4 h-4 bg-gradient-to-r from-emerald-400/20 to-green-500/20 transform rotate-45"
             style={{
-              left: config.left,
-              top: config.top,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
             }}
           />
         ))}
@@ -464,7 +443,7 @@ export default function PDFSummaryPage() {
               >
                 {/* Animated background patterns */}
                 <div className="absolute inset-0 opacity-10">
-                  {uploadPatterns.map((pattern, i) => (
+                  {Array.from({ length: 6 }).map((_, i) => (
                     <motion.div
                       key={i}
                       animate={{
@@ -472,14 +451,14 @@ export default function PDFSummaryPage() {
                         scale: [1, 1.2, 1],
                       }}
                       transition={{
-                        duration: pattern.duration,
+                        duration: 8 + i * 2,
                         repeat: Infinity,
                         delay: i * 1,
                       }}
                       className="absolute w-16 h-16 border-2 border-emerald-400 rounded-lg"
                       style={{
-                        left: pattern.left,
-                        top: pattern.top,
+                        left: `${Math.random() * 80}%`,
+                        top: `${Math.random() * 80}%`,
                       }}
                     />
                   ))}
@@ -752,11 +731,7 @@ export default function PDFSummaryPage() {
                   {
                     icon: File,
                     title: "Original Words",
-                    value:
-                      summaryResult &&
-                      typeof summaryResult.original_word_count === "number"
-                        ? summaryResult.original_word_count.toLocaleString()
-                        : "N/A",
+                    value: summaryResult.original_word_count.toLocaleString(),
                     gradient: "from-blue-500 to-cyan-500",
                     bgGradient: "from-blue-900/30 to-cyan-900/40",
                     borderColor: "border-blue-500/30",
@@ -764,11 +739,7 @@ export default function PDFSummaryPage() {
                   {
                     icon: FileText,
                     title: "Summary Words",
-                    value:
-                      summaryResult &&
-                      typeof summaryResult.summary_word_count === "number"
-                        ? summaryResult.summary_word_count.toLocaleString()
-                        : "N/A",
+                    value: summaryResult.summary_word_count.toLocaleString(),
                     gradient: "from-emerald-500 to-green-500",
                     bgGradient: "from-emerald-900/30 to-green-900/40",
                     borderColor: "border-emerald-500/30",
@@ -776,13 +747,7 @@ export default function PDFSummaryPage() {
                   {
                     icon: TrendingUp,
                     title: "Compression Ratio",
-                    value:
-                      summaryResult &&
-                      typeof summaryResult.compression_ratio === "number" &&
-                      typeof summaryResult.original_word_count === "number" &&
-                      typeof summaryResult.summary_word_count === "number"
-                        ? `${summaryResult.summary_word_count} / ${summaryResult.original_word_count} (${summaryResult.compression_ratio.toFixed(1)}%)`
-                        : "N/A",
+                    value: `${summaryResult.compression_ratio.toFixed(1)}%`,
                     gradient: "from-teal-500 to-cyan-500",
                     bgGradient: "from-teal-900/30 to-cyan-900/40",
                     borderColor: "border-teal-500/30",
