@@ -224,6 +224,10 @@ Crafted with 💡, 🤖, and ☕ by passionate students/developers focused on bu
                    LinkedIn : 
 
 
+COULD NOT BE DEPLOYED ON FREE TIER OF AWS, WAS COSTING US SEVERAL DOLLARS.
+<img width="1283" height="690" alt="image" src="https://github.com/user-attachments/assets/e0444c5b-b429-4ccb-ac2c-3cbe3aced60e" />
+
+
 🙏 Special thanks to all open-source contributors and mentors who supported this journey.
 
 Anyone who wants to improve communication, resumes, and job reach
