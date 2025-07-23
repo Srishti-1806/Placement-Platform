@@ -79,7 +79,7 @@ export default function YouTubeConverterPage() {
       console.log("Starting YouTube transcription for:", url);
 
       // Use Next.js API route (which uses env variable for backend)
-      const response = await fetch("/api/youtube-transcript", {
+      const response = await fetch("http://127.0.0.1:8000/api/youtube-transcript", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -631,7 +631,7 @@ export default function YouTubeConverterPage() {
                       {
                         icon: FileText,
                         label: "Title",
-                        value: transcriptResult.video_info.title,
+                        value: transcriptResult.video_info.title?? "No Title",
                         color: "from-blue-400 to-cyan-400",
                       },
                       {
