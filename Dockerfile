@@ -69,7 +69,9 @@ RUN apt-get update && \
         libgl1 \
         libglib2.0-0 \
         libglib2.0-bin \
-        libgstreamer1.0-0 && \
+        libgstreamer1.0-0 \
+        ffmpeg \
+        git && \
     rm -rf /var/lib/apt/lists/*
 RUN pip install --upgrade pip setuptools wheel
 
