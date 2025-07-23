@@ -10,6 +10,9 @@ COPY next.config.mjs postcss.config.mjs* tailwind.config.js* tsconfig.json* ./
 # Install pnpm and dependencies
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
+RUN apt-get update && \
+    apt-get install -y ffmpeg git && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 # Copy source code
 COPY app/ ./app/
 COPY components/ ./components/
@@ -68,7 +71,7 @@ RUN apt-get update && \
         libglib2.0-bin \
         libgstreamer1.0-0 && \
     rm -rf /var/lib/apt/lists/*
-
+RUN pip install --upgrade pip setuptools wheel
 
 # Copy Python environment and backend
 COPY --from=backend-builder /opt/venv /opt/venv
@@ -114,7 +117,7 @@ RUN useradd -m appuser
 RUN chown -R appuser:appuser /app
 USER appuser
 
-EXPOSE 3000 5000 8000 80
+EXPOSE 3000 5000 8000 80 8501
 
 HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=3 CMD ["/healthcheck.sh"]
 
