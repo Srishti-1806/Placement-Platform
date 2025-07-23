@@ -10,9 +10,9 @@ COPY next.config.mjs postcss.config.mjs* tailwind.config.js* tsconfig.json* ./
 # Install pnpm and dependencies
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
-RUN apt-get update && \
-    apt-get install -y ffmpeg git && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# ✅ FIXED: Use apk instead of apt-get (Alpine)
+RUN apk add --no-cache ffmpeg git
+
 # Copy source code
 COPY app/ ./app/
 COPY components/ ./components/
@@ -30,7 +30,7 @@ ENV CHAT_WS_URL="ws://16.171.134.238:5000"
 ENV NEXT_PUBLIC_API_URL="http://16.171.134.238:8000"
 ENV NEXT_PUBLIC_CHAT_WS_URL="ws://16.171.134.238:5000"
 
-# Build Next.js frontend
+# Build frontend
 RUN pnpm build
 
 # ---- Stage 2: Python dependencies and backend build ----
@@ -43,21 +43,24 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends libgl1 && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies
 COPY requirements.txt .
 RUN python -m venv /opt/venv && \
     /opt/venv/bin/pip install --upgrade pip && \
     /opt/venv/bin/pip install --timeout=1000 --no-cache-dir -r requirements.txt
 
-# Copy backend files
+# Copy backend source files
 COPY *.py ./
 COPY utils/ ./utils/
 COPY supervisord.conf ./
 
-# Ensure utils is recognized as a Python module
+# Ensure utils is a Python package
 RUN touch utils/__init__.py
 
 # ---- Stage 3: Final image ----
 FROM python:3.11-slim
+
+WORKDIR /app
 
 # System dependencies
 RUN apt-get update && \
@@ -73,6 +76,8 @@ RUN apt-get update && \
         ffmpeg \
         git && \
     rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip
 RUN pip install --upgrade pip setuptools wheel
 
 # Copy Python environment and backend
@@ -81,21 +86,20 @@ COPY --from=backend-builder /app/*.py /app/
 COPY --from=backend-builder /app/utils /app/utils
 COPY --from=backend-builder /app/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Copy frontend build output and package files
+# Copy frontend build and config
 COPY --from=frontend-builder /app/.next /app/.next
 COPY --from=frontend-builder /app/public /app/public
 COPY --from=frontend-builder /app/package.json /app/package.json
 COPY --from=frontend-builder /app/pnpm-lock.yaml /app/pnpm-lock.yaml
 COPY --from=frontend-builder /app/next.config.mjs /app/next.config.mjs
 
-WORKDIR /app
-
+# Environment
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     IN_DOCKER=true \
     PYTHONPATH=/app
 
-# Create supervisor log directories
+# Create log folders for supervisor
 RUN mkdir -p /app/logs && \
     touch /app/logs/backend.out.log /app/logs/backend.err.log \
           /app/logs/chat.out.log /app/logs/chat.err.log \
@@ -111,10 +115,10 @@ for i in {1..3}; do\n\
 done\n\
 exit 1\n' > /healthcheck.sh && chmod +x /healthcheck.sh
 
-# Install pnpm and production node_modules for Next.js runtime
+# Install pnpm and production node_modules
 RUN npm install -g pnpm && pnpm install --prod --frozen-lockfile
 
-# Create non-root user
+# Use non-root user for safety
 RUN useradd -m appuser
 RUN chown -R appuser:appuser /app
 USER appuser
